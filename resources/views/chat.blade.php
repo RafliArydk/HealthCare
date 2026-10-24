@@ -21,6 +21,7 @@
             </button>
         </div>
 
+        
         <form id="chatForm" class="hc-inputbar" enctype="multipart/form-data">
             <label for="imageInput" class="hc-btn-icon" title="Unggah gambar">
                 <i class="bi bi-image"></i>
@@ -129,19 +130,25 @@
                 },
                 body: fd
             });
-            const data = await res.json();
             
+            const data = await res.json();
             loadingEl.remove();
-            appendAIMessage(data.reply);
+
+            // Jika server ngasih status error (500, 503, dll)
+            if (!res.ok) {
+                appendErrorMessage(data.reply || 'Terjadi kesalahan pada server.');
+            } else {
+                appendAIMessage(data.reply);
+            }
             
         } catch (err) {
+            // Jika internet beneran mati (fetch gagal total)
             loadingEl.remove();
-            appendAIMessage('⚠️ Maaf, terjadi kesalahan pada jaringan.');
+            appendErrorMessage('⚠️ Koneksi internet terputus. Silakan periksa jaringan Anda dan coba lagi.');
         } finally {
             isLoading = false;
             btnSend.disabled = false;
         }
-    });
 
     function appendUserMessage(text, file) {
         const wrap = document.createElement('div');
@@ -181,6 +188,19 @@
                 ${disclaimer}
             </div>`;
             
+        chatArea.appendChild(wrap);
+        scrollBottom();
+    }
+
+    function appendErrorMessage(msg) {
+        const wrap = document.createElement('div');
+        wrap.className = 'hc-msg hc-msg-ai'; // Pakai style AI
+        wrap.innerHTML = `
+            <div class="hc-avatar" style="background: #ef4444;"><i class="bi bi-exclamation-triangle-fill"></i></div>
+            <div class="hc-bubble" style="border-color: #ef4444; background: #fef2f2; color: #b91c1c;">
+                <strong>Sistem Error</strong><br>
+                ${escapeHtml(msg)}
+            </div>`;
         chatArea.appendChild(wrap);
         scrollBottom();
     }

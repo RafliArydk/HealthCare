@@ -71,6 +71,7 @@ Jangan pernah memberi diagnosis pasti.";
         // 4. Tembak ke Groq API
         try {
             $response = Http::withToken(config('services.groq.key'))
+                ->retry(3, 1000) // Retry 3 kali dengan delay 1 detik
                 ->timeout(config('services.groq.timeout'))
                 ->acceptJson()
                 ->post(config('services.groq.base_url') . '/chat/completions', $payload);
@@ -79,7 +80,7 @@ Jangan pernah memberi diagnosis pasti.";
             if ($response->failed()) {
                 return response()->json([
                     'reply' => '⚠️ Gagal menghubungi AI: ' . ($response->json('error.message') ?? 'Unknown Error')
-                ]);
+                ], 500);
             }
 
             // 5. Ambil Jawaban AI
@@ -90,7 +91,9 @@ Jangan pernah memberi diagnosis pasti.";
             return response()->json(['reply' => $reply]);
 
         } catch (\Exception $e) {
-            return response()->json(['reply' => '⚠️ Error sistem: ' . $e->getMessage()]);
+            return response()->json([
+                'reply' => '⚠️ Error sistem: ' . $e->getMessage()
+            ], 503); // <-- Tambahkan 503 (Service Unavailable) di sini
         }
     }
 }
