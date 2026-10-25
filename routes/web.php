@@ -1,16 +1,52 @@
 <?php
 
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ChatController;
 use Illuminate\Support\Facades\Route;
 
-/*
-|--------------------------------------------------------------------------
-| Web Routes — HealthCare
-|--------------------------------------------------------------------------
-*/
+Route::get('/', function () {
+    return view('welcome');
+});
 
-Route::get('/', [ChatController::class, 'index'])->name('chat.index');
+// Grouping untuk User yang sudah login
+Route::middleware(['auth', 'verified'])->group(function () {
+    // Dashboard
+    Route::get('/dashboard', function () {
+        return view('dashboard');
+    })->name('dashboard');
 
-Route::post('/chat', [ChatController::class, 'send'])
-    ->middleware('throttle:10,1')   // max 10 request/menit
-    ->name('chat.send');
+    // Scan
+    Route::get('/scan', function () {
+        return view('scan');
+    })->name('scan.index');
+
+    // Chat & Riwayat
+    Route::get('/chat', function () {
+        return view('chat');
+    })->name('chat.index');
+    
+    // (Opsional) Route send untuk backend nanti
+    Route::post('/chat', [ChatController::class, 'send'])->name('chat.send');
+
+    Route::get('/history', function () {
+        return view('history');
+    })->name('history.index');
+
+    // Settings & Help
+    Route::get('/settings', function () {
+        return view('settings');
+    })->name('settings.index');
+
+    Route::get('/help', function () {
+        return view('help');
+    })->name('help.index');
+});
+
+// Route bawaan Breeze untuk Profile
+Route::middleware('auth')->group(function () {
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
+
+require __DIR__.'/auth.php';

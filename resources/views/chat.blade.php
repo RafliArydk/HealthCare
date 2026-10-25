@@ -21,7 +21,7 @@
             </button>
         </div>
 
-        
+
         <form id="chatForm" class="hc-inputbar" enctype="multipart/form-data">
             <label for="imageInput" class="hc-btn-icon" title="Unggah gambar">
                 <i class="bi bi-image"></i>
@@ -60,7 +60,7 @@
             const item = items[index];
             if (item.kind === 'file' && item.type.startsWith('image/')) {
                 const file = item.getAsFile();
-                
+
                 // Cek ukuran maksimal 4 MB
                 if (file.size > 4 * 1024 * 1024) {
                     alert('Maksimal ukuran gambar adalah 4 MB');
@@ -71,13 +71,13 @@
                 selectedFile = file;
                 previewImg.src = URL.createObjectURL(file);
                 previewWrap.style.display = 'block';
-                
+
                 // Cegah browser nge-paste path file, kita cuma mau gambarnya aja
-                e.preventDefault(); 
+                e.preventDefault();
             }
         }
     });
-    
+
     imageInput.addEventListener('change', e => {
         const file = e.target.files[0];
         if (!file) return;
@@ -87,7 +87,7 @@
             imageInput.value = '';
             return;
         }
-        
+
         selectedFile = file;
         previewImg.src = URL.createObjectURL(file);
         previewWrap.style.display = 'block';
@@ -124,13 +124,13 @@
         try {
             const res = await fetch("{{ route('chat.send') }}", {
                 method: 'POST',
-                headers: { 
+                headers: {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
                     'Accept': 'application/json'
                 },
                 body: fd
             });
-            
+
             const data = await res.json();
             loadingEl.remove();
 
@@ -140,7 +140,7 @@
             } else {
                 appendAIMessage(data.reply);
             }
-            
+
         } catch (err) {
             // Jika internet beneran mati (fetch gagal total)
             loadingEl.remove();
@@ -154,7 +154,7 @@
         const wrap = document.createElement('div');
         wrap.className = 'hc-msg hc-msg-user';
         let inner = '';
-        
+
         if (file) {
             const url = URL.createObjectURL(file);
             inner += `<img src="${url}" class="hc-chat-img" alt="gambar">`;
@@ -162,7 +162,7 @@
         if (text) {
             inner += `<div>${escapeHtml(text)}</div>`;
         }
-        
+
         wrap.innerHTML = `<div class="hc-bubble">${inner}</div>`;
         chatArea.appendChild(wrap);
         scrollBottom();
@@ -171,7 +171,7 @@
     function appendAIMessage(html) {
         const wrap = document.createElement('div');
         wrap.className = 'hc-msg hc-msg-ai';
-        
+
         // SANITASI XSS: Bersihkan HTML sebelum di-render
         const cleanHtml = DOMPurify.sanitize(marked.parse(html));
 
@@ -187,7 +187,7 @@
                 ${cleanHtml}
                 ${disclaimer}
             </div>`;
-            
+
         chatArea.appendChild(wrap);
         scrollBottom();
     }
@@ -218,14 +218,14 @@
         return wrap;
     }
 
-    function scrollBottom() { 
-        chatArea.scrollTop = chatArea.scrollHeight; 
+    function scrollBottom() {
+        chatArea.scrollTop = chatArea.scrollHeight;
     }
 
-    function escapeHtml(s) { 
-        const d = document.createElement('div'); 
-        d.textContent = s; 
-        return d.innerHTML; 
+    function escapeHtml(s) {
+        const d = document.createElement('div');
+        d.textContent = s;
+        return d.innerHTML;
     }
 </script>
 @endpush
