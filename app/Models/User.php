@@ -29,4 +29,12 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    /**
+     * Relasi ke tabel scans (1 User punya banyak Scan)
+     */
+    public function scans()
+    {
+        return $this->hasMany(Scan::class);
+    }
 }

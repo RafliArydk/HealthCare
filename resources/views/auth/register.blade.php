@@ -1,19 +1,19 @@
 <x-guest-layout>
     <div class="min-h-screen flex items-center justify-center bg-[#f8fafc] p-4 md:p-8">
-        
+
         <!-- Container Utama -->
         <div class="flex w-full max-w-6xl bg-white rounded-3xl shadow-2xl overflow-hidden min-h-[750px] border border-gray-100">
-            
+
             <!-- KIRI: Banner Biru -->
             <div class="hidden md:flex md:w-1/2 bg-gradient-to-br from-[#0ea5e9] to-[#0284c7] p-12 flex-col justify-between relative overflow-hidden">
-                
+
                 <!-- ===== ORNAMEN BACKGROUND BIRU ===== -->
                 <!-- 1. Lingkaran Solid Transparan di Kanan Atas -->
                 <div class="absolute -top-32 -right-32 w-[30rem] h-[30rem] bg-white opacity-10 rounded-full"></div>
-                
+
                 <!-- 2. Lingkaran Outline (Bolong) di Kiri Bawah -->
                 <div class="absolute -bottom-24 -left-24 w-80 h-80 border-[30px] border-white opacity-15 rounded-full"></div>
-                
+
                 <!-- 3. Tanda Plus (+) Melayang -->
                 <div class="absolute top-24 right-16 text-white opacity-40 text-7xl font-thin">+</div>
                 <div class="absolute bottom-1/3 right-12 text-white opacity-30 text-5xl font-thin">+</div>
@@ -50,7 +50,7 @@
                             </div>
                             <div class="w-full bg-gray-100 h-1.5 rounded-full"><div class="bg-blue-400 h-1.5 rounded-full w-[92%]"></div></div>
                         </div>
-                        
+
                         <!-- Card 2: Chat -->
                         <div class="absolute top-16 right-0 bg-white p-3 rounded-xl shadow-xl border border-blue-50 w-56 transform rotate-2 z-10">
                             <div class="bg-[#0ea5e9] text-white text-[10px] p-2 rounded-lg rounded-tr-none inline-block mb-2 float-right">Perlu ganti perban tiap hari?</div>
@@ -84,9 +84,9 @@
 
             <!-- KANAN: Form Register -->
             <!-- Background Titik-titik Biru (Diperbesar & Diperjelas) -->
-            <div class="flex w-full flex-col justify-center px-8 md:w-1/2 lg:px-16 bg-white p-8 relative" 
+            <div class="flex w-full flex-col justify-center px-8 md:w-1/2 lg:px-16 bg-white p-8 relative"
                  style="background-image: radial-gradient(#bae6fd 2.5px, transparent 2.5px); background-size: 24px 24px;">
-                
+
                 <!-- Card Form Putih -->
                 <div class="w-full max-w-md mx-auto bg-white p-8 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] border border-gray-100 relative z-10">
                     <h1 class="text-3xl font-bold text-gray-900 mb-1">Buat akun</h1>
@@ -122,7 +122,7 @@
                                 </div>
                             </div>
                             <x-input-error :messages="$errors->get('password')" class="mt-1" />
-                            
+
                             <!-- Bar Kekuatan Sandi -->
                             <div class="mt-2">
                                 <div class="flex justify-between items-center mb-1">
@@ -167,7 +167,7 @@
                         </p>
                     </form>
                 </div>
-                
+
                 <p class="mt-6 text-center text-[10px] text-gray-400 relative z-10">
                     Bukan pengganti diagnosis dokter. Darurat? Hubungi 119.
                 </p>
@@ -185,7 +185,7 @@
             passwordInput.addEventListener('input', function() {
                 const val = passwordInput.value;
                 let score = 0;
-                
+
                 if (val.length >= 8) score++;
                 if (val.match(/[a-z]/)) score++;
                 if (val.match(/[A-Z]/)) score++;
