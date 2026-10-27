@@ -20,7 +20,7 @@
                     <div class="bg-[#0ea5e9] text-white p-1.5 rounded-xl mr-3 shadow-sm">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"></path></svg>
                     </div>
-                    <span class="text-xl font-bold text-gray-900 tracking-tight">HealCareAI</span>
+                    <span class="text-xl font-bold text-gray-900 tracking-tight">HealthCareAI</span>
                 </div>
 
                 <!-- Menu Area -->

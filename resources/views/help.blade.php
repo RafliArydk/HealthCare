@@ -1,7 +1,7 @@
 <x-app-layout>
     <div class="mb-8">
         <h2 class="text-3xl font-extrabold text-gray-900 tracking-tight">Pusat Bantuan</h2>
-        <p class="text-gray-500 mt-2 text-sm">Informasi singkat untuk menggunakan HealCare AI dengan bijak.</p>
+        <p class="text-gray-500 mt-2 text-sm">Informasi singkat untuk menggunakan HealthCare AI dengan bijak.</p>
     </div>
 
     <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden mb-6 divide-y divide-gray-100">
