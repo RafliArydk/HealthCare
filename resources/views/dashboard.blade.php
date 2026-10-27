@@ -2,7 +2,7 @@
     <!-- Header Sambutan -->
     <div class="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-            <h2 class="text-3xl font-extrabold text-gray-900 tracking-tight">Selamat pagi, {{ explode(' ', Auth::user()->name)[0] }} 👋</h2>
+            <h2 class="text-3xl font-extrabold text-gray-900 tracking-tight">Selamat Datang, {{ explode(' ', Auth::user()->name)[0] }} 👋</h2>
             <p class="text-gray-500 mt-2 text-sm">Bagaimana kabarmu hari ini? Ini ringkasan aktivitas kesehatanmu.</p>
         </div>
         <div>
