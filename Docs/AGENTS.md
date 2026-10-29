@@ -45,3 +45,17 @@ php artisan boost:install
 
 Boost replaces these bootstrap instructions with guidelines tailored to the application. After installation, read `AGENTS.md` again and continue with the user's original request using the generated guidelines.
 </laravel-boost-guidelines>
+
+Struktur Folder
+
+HealthCare-app/
+├── app/ (Laravel Core)
+├── resources/views/ (Blade UI)
+├── routes/web.php
+├── ai-service/ (Python Microservice)
+│   ├── app/main.py (FastAPI server)
+│   ├── app/predictor.py (Load model & inferensi)
+│   ├── app/schemas.py (Pydantic models)
+│   ├── models/model_cnn.keras (Model hasil training)
+│   └── requirements.txt
+└── notebooks/ (File .ipynb training Colab)

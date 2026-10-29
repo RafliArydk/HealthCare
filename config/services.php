@@ -19,14 +19,19 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
-    // ===== TAMBAHAN GROQ AI =====
     'groq' => [
         'key'         => env('GROQ_API_KEY'),
-        'model'       => env('GROQ_VISION_MODEL', 'llama-3.2-11b-vision-preview'),
+        'model'       => env('GROQ_VISION_MODEL', 'qwen/qwen3.8-27b'),
         'timeout'     => (int) env('GROQ_TIMEOUT', 30),
         'max_tokens'  => (int) env('GROQ_MAX_TOKENS', 800),
         'temperature' => (float) env('GROQ_TEMPERATURE', 0.4),
         'base_url'    => 'https://api.groq.com/openai/v1',
+    ],
+
+    'ai_service' => [
+        'url'     => env('AI_SERVICE_URL', 'http://127.0.0.1:8001'),
+        'token'   => env('AI_SERVICE_TOKEN'),
+        'timeout' => (int) env('AI_SERVICE_TIMEOUT', 15),
     ],
 
 ];

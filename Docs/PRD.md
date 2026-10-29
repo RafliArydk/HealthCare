@@ -1,46 +1,71 @@
-PRODUCT REQUIREMENTS DOCUMENT (PRD)
-Nama Produk: HealthCare (Vision Chatbot Deteksi Luka & Obat)
-Versi: 2.0 (Edisi Integrasi Groq API - LLaMA Vision)
+# Product Requirements Document (PRD)
 
-1. Ringkasan Eksekutif
-HealthCare adalah aplikasi web chatbot medis interaktif yang dirancang untuk memproses input teks dan gambar (foto) dari pengguna. Sistem ini memanfaatkan kecepatan tinggi dari Groq API menggunakan model Vision open-source (seperti LLaMA 3.2 Vision) yang tersedia pada tier gratis. Aplikasi ini akan mengidentifikasi jenis luka fisik untuk memberikan saran P3K, serta membaca kemasan obat untuk menjelaskan indikasi dan cara pakainya.
+## HealthCare — Agen Cerdas Identifikasi Luka dan Obat
 
-2. Arsitektur & Teknologi (Tech Stack)
-Arsitektur: Model-View-Controller (MVC)
+**Versi:** 2.1 (diselaraskan dengan proposal 27 Oktober 2026)
+**Status:** Draft implementasi bertahap
 
-Frontend (Antarmuka): Laravel Blade, HTML5, CSS3, dan Bootstrap 5 (ramah pemula, responsif, dan rapi tanpa framework JavaScript tambahan).
+## 1. Ringkasan Produk
 
-Backend (Logika & Keamanan): PHP (Laravel 10 atau 11). Laravel bertindak sebagai jembatan yang menyembunyikan API Key Groq dari sisi klien (mencegah pencurian API Key).
+HealthCare membantu pengguna memahami gambar luka ringan atau kemasan obat dan memperoleh panduan edukatif awal. Produk akhir menggunakan Hybrid AI: CNN MobileNetV2 pada Python/FastAPI mengklasifikasikan gambar menjadi `luka`, `obat`, atau `tidak_relevan`; Laravel menjadi web application dan orchestrator; Groq API menghasilkan penjelasan hanya setelah hasil CNN lolos guardrail.
 
-AI Engine (Vision LLM): Groq API (Endpoint OpenAI-Compatible) menggunakan model llama-3.2-11b-vision-preview atau llama-3.2-90b-vision-preview. Model ini dipilih karena mendukung pembacaan gambar, sangat cepat (menggunakan LPU), dan 100% gratis untuk developer.
+Versi kode saat ini sudah memiliki alur Laravel langsung ke Groq. Integrasi CNN/FastAPI dan confidence gate adalah target pengembangan berikutnya, bukan fitur yang sudah selesai.
 
-3. Persyaratan Fungsional (Functional Requirements)
-FR-01: Input Multimodal (Teks + Gambar)
+## 2. Tujuan dan Indikator Keberhasilan
 
-Formulir obrolan memiliki kolom teks (opsional) dan tombol unggah gambar (wajib untuk deteksi).
+- Menyediakan informasi P3K luka ringan dan edukasi obat bebas secara cepat.
+- Mengurangi respons LLM pada gambar buram atau tidak relevan.
+- Menyediakan arsitektur AI yang terukur sebagai Proof of Concept.
+- Target akhir: akurasi CNN minimal 85%, penolakan gambar tidak relevan/buram minimal 90%, penilaian respons aman/relevan minimal 85%, dan P95 end-to-end maksimal 5 detik.
 
-FR-02: Auto-Routing Konteks
+## 3. Pengguna dan Batasan
 
-Model LLaMA Vision membedakan secara otomatis apakah gambar yang dikirim adalah luka, kemasan obat, atau gambar acak yang tidak relevan.
+Pengguna utama adalah masyarakat umum; pengguna pendukung adalah relawan atau pengelola komunitas. HealthCare bukan dokter, bukan alat diagnosis, dan bukan pengganti dokter, apoteker, atau UGD.
 
-FR-03: Analisis Luka (Wound Care)
+## 4. Ruang Lingkup
 
-Output wajib mencakup: 1) Jenis luka, 2) Estimasi kondisi (lecet/bakar/sayat), 3) Langkah P3K, 4) Tanda bahaya (kapan harus ke dokter).
+**Termasuk:** register/login/verifikasi email, upload JPG/JPEG/PNG/WEBP maksimal 10 MB, tipe scan `luka`/`obat`, notes maksimal 1.000 karakter, penyimpanan hasil, riwayat scan, chat lanjutan, CNN + guardrail + Groq, disclaimer, dan rujukan darurat.
 
-FR-04: Analisis Obat (Medication Guide)
+**Tidak termasuk versi awal:** diagnosis klinis, resep obat keras, deteksi semua penyakit kulit, pelatihan model dari data pengguna tanpa persetujuan, dan aplikasi mobile native.
 
-Output wajib mencakup: 1) Nama obat, 2) Fungsi & indikasi, 3) Aturan pakai umum, 4) Efek samping utama.
+## 5. Persyaratan Fungsional
 
-FR-05: Penyangkalan Medis (Medical Disclaimer)
+| ID | Persyaratan | Prioritas | Kriteria penerimaan |
+|---|---|---|---|
+| FR-01 | Register dan login | Must | Halaman terproteksi hanya untuk user terautentikasi |
+| FR-02 | Upload citra scan | Must | Format valid dan maksimal 10 MB |
+| FR-03 | Memilih tipe luka/obat | Must | Tipe wajib disimpan |
+| FR-04 | CNN mengembalikan label dan confidence | Must | Label valid dan skor 0–1 |
+| FR-05 | Menolak label `tidak_relevan` atau skor `<= 0.70` | Must | Groq tidak dipanggil |
+| FR-06 | Groq menghasilkan panduan edukatif | Must | Format sesuai jenis dan batasan medis |
+| FR-07 | Disclaimer di setiap respons | Must | Tetap tampil saat AI gagal |
+| FR-08 | Chat lanjutan per scan | Must | Pesan tersimpan pada scan yang benar |
+| FR-09 | Riwayat scan | Must | User hanya melihat datanya sendiri |
+| FR-10 | Audit event | Should | Rejected, accepted, dan failed tercatat |
+| FR-11 | Rujukan kondisi darurat | Must | Mengarahkan ke dokter/faskes/UGD |
 
-Sistem menyisipkan teks statis di akhir jawaban: "Peringatan: Informasi ini dihasilkan oleh AI (HealthCare) dan bukan diagnosis medis. Segera konsultasikan ke dokter untuk penanganan pasti."
+## 6. Aturan Bisnis dan Keselamatan
 
-4. Persyaratan Non-Fungsional
-NFR-01: Keamanan API Key: Kredensial Groq API hanya disimpan di file .env server dan dieksekusi di Controller PHP.
+- **RB-01:** Tidak memberikan diagnosis pasti atau resep obat keras.
+- **RB-02:** `confidence <= 0.70` atau `tidak_relevan` wajib safe rejection.
+- **RB-03:** Catatan pengguna hanya konteks, bukan instruksi untuk melewati kebijakan.
+- **RB-04:** Setiap respons berisi disclaimer bahwa informasi bukan diagnosis profesional.
+- **RB-05:** API key hanya berada di server melalui `.env`/config.
+- **RB-06:** Pendarahan berat, luka dalam, luka bakar luas, alergi berat, atau kondisi memburuk dirujuk ke tenaga medis/UGD.
+- **RB-07:** Citra pengguna tidak digunakan untuk pelatihan model publik tanpa persetujuan eksplisit.
 
-NFR-02: Optimasi Gambar: Gambar yang diunggah harus dikonversi ke format Base64 dan dibatasi ukurannya (maksimal 2-4 MB) sebelum dikirim ke Groq agar tidak terkena limit payload.
+## 7. Kondisi Produk Saat Ini
 
-NFR-03: Kecepatan Respons: Memanfaatkan Groq LPU, balasan AI ditargetkan muncul dalam waktu kurang dari 5 detik setelah gambar selesai diunggah.
+| Komponen | Status sekarang | Target |
+|---|---|---|
+| Laravel 13, Blade, Tailwind/Vite | Sudah ada | Dipertahankan |
+| Auth dan profil | Sudah ada | Diperkuat pengujian |
+| Scan dan penyimpanan gambar | Sudah ada | Ditambah classifier/guardrail |
+| Chat per scan | Sudah ada | Ditambah ownership check/disclaimer |
+| Groq direct vision | Sudah ada | Dipanggil setelah CNN gate |
+| CNN MobileNetV2/FastAPI | Belum ada | Fase 2–3 |
+| `confidence_score` dan `audit_logs` | Belum ada | Fase 4 |
 
-5. Panduan Pembuatan Kode (Langkah demi Langkah)
-Pendekatan ini sangat ramah pemula karena menggunakan Laravel HTTP Client bawaan untuk menembak API Groq yang sudah berformat OpenAI-Compatible.
+## 8. Risiko Produk
+
+Model dapat salah klasifikasi dan LLM dapat berhalusinasi. Mitigasinya adalah threshold, safe rejection, prompt terkunci, disclaimer, rujukan darurat, evaluasi manusia, timeout, dan pencatatan error. Data medis harus diminimalkan dan dibatasi berdasarkan `user_id`.

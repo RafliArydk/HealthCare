@@ -28,3 +28,11 @@ Homestead.yaml
 Thumbs.db
 *.sqlite
 *.sqlite-*
+
+# AI & Python
+__pycache__/
+*.pyc
+ai-service/models/*.h5
+ai-service/models/*.keras
+ai-service/dataset/
+notebooks/.ipynb_checkpoints/

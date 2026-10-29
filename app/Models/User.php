@@ -17,11 +17,6 @@ class User extends Authenticatable
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
@@ -30,11 +25,13 @@ class User extends Authenticatable
         ];
     }
 
-    /**
-     * Relasi ke tabel scans (1 User punya banyak Scan)
-     */
     public function scans()
     {
         return $this->hasMany(Scan::class);
+    }
+
+    public function auditLogs()
+    {
+        return $this->hasMany(AuditLog::class);
     }
 }

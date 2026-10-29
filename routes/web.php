@@ -14,9 +14,10 @@ Route::get('/', function () {
 // Grouping untuk User yang sudah login
 Route::middleware(['auth', 'verified'])->group(function () {
 
+    // ================= USER ROUTES =================
     // Dashboard (Dinamis)
     Route::get('/dashboard', function () {
-        /** @var \App\Models\User $user */ //
+        /** @var \App\Models\User $user */
         $user = Auth::user();
 
         // Statistik
@@ -38,7 +39,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return view('scan');
     })->name('scan.index');
 
-    // Route untuk memproses upload
     Route::post('/scan', [ScanController::class, 'store'])->name('scan.store');
 
     // Chat & Riwayat
@@ -46,12 +46,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return view('chat', ['scan' => $scan]);
     })->name('chat.index');
 
-    // Endpoint untuk kirim pesan chat (HANYA INI YANG DIPAKAI)
     Route::post('/chat/{scan}/send', [ChatController::class, 'send'])->name('chat.send');
 
-    // 2. HAPUS ROUTE POST /chat YANG KEDUA (Yang duplikat)
-
-    // History (Dinamis)
+    // History
     Route::get('/history', function () {
         $scans = Auth::user()->scans()->latest()->get();
         return view('history', compact('scans'));
@@ -65,6 +62,24 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/help', function () {
         return view('help');
     })->name('help.index');
+
+
+    // ================= ADMIN ROUTES =================
+    Route::get('/admin/dashboard', function () {
+        return view('admin.dashboard');
+    })->name('admin.dashboard');
+
+    Route::get('/admin/monitoring', function () {
+        return view('admin.monitoring'); // <-- SUDAH DIFIX
+    })->name('admin.monitoring');
+
+    Route::get('/admin/users', function () {
+        return view('admin.users'); // <-- SUDAH DIFIX
+    })->name('admin.users');
+
+    Route::get('/admin/reports', function () {
+        return view('admin.reports'); // <-- SUDAH DIFIX
+    })->name('admin.reports');
 });
 
 // Route bawaan Breeze untuk Profile
