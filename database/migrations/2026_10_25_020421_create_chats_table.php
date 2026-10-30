@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('chats', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('scan_id')->constrained()->onDelete('cascade'); // Relasi ke tabel scans
+            $table->foreignId('scan_id')->nullable()->constrained()->onDelete('cascade'); // Relasi opsional ke scan
             $table->enum('sender', ['user', 'ai']);
             $table->text('message');
             $table->timestamps();

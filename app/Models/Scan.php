@@ -15,7 +15,8 @@ use Illuminate\Database\Eloquent\Model;
     'model_version',
     'status',
     'error_code',
-    'initial_analysis'
+    'initial_analysis',
+    'consent_training',
 ])]
 class Scan extends Model
 {
@@ -25,6 +26,7 @@ class Scan extends Model
     {
         return [
             'confidence_score' => 'decimal:4',
+            'consent_training' => 'boolean',
         ];
     }
 

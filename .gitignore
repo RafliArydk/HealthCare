@@ -30,10 +30,12 @@ Thumbs.db
 *.sqlite
 *.sqlite-*
 *.db
+healthcare_db
 *.zip
 
 # AI & Python
 __pycache__/
+.python-temp/
 *.pyc
 *.pyo
 .pytest_cache/
@@ -44,6 +46,9 @@ htmlcov/
 *.egg-info/
 ai-service/models/*.h5
 ai-service/models/*.keras
+ai-service/models/model_version.txt
+ai-service/models/*.backup-*
 ai-service/dataset/
 ai-service/dataset_raw/
+storage/app/dataset/
 notebooks/.ipynb_checkpoints/

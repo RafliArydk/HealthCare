@@ -61,7 +61,11 @@
                 @foreach($scan->chats as $chat)
                     @if($chat->sender == 'user')
                         <div class="flex gap-3 max-w-3xl ml-auto flex-row-reverse">
-                            <div class="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-xs mt-1">{{ strtoupper(substr(Auth::user()->name, 0, 2)) }}</div>
+                            @if(Auth::user()->profile_photo_path)
+                                <img src="{{ asset('storage/'.Auth::user()->profile_photo_path) }}" alt="Foto profil {{ Auth::user()->name }}" class="w-8 h-8 rounded-full object-cover flex-shrink-0 mt-1">
+                            @else
+                                <div class="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-xs mt-1">{{ strtoupper(substr(Auth::user()->name, 0, 2)) }}</div>
+                            @endif
                             <div>
                                 <div class="bg-[#0ea5e9] text-white p-4 rounded-2xl rounded-tr-none shadow-sm text-sm leading-relaxed">
                                     {{ $chat->message }}
@@ -134,6 +138,10 @@
         const btnSend = document.getElementById('btnSend');
         const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
         const userInitial = "{{ strtoupper(substr(Auth::user()->name, 0, 2)) }}";
+        const userAvatar = @json(Auth::user()->profile_photo_path ? asset('storage/'.Auth::user()->profile_photo_path) : null);
+        const userAvatarMarkup = userAvatar
+            ? `<img src="${userAvatar}" alt="Foto profil" class="w-8 h-8 rounded-full object-cover flex-shrink-0 mt-1">`
+            : `<div class="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-xs mt-1">${userInitial}</div>`;
 
         // Elemen Upload/Paste
         const imageInput = document.getElementById('imageInput');
@@ -198,7 +206,7 @@
 
             try {
                 // Gunakan rute yang sesuai
-                const url = "{{ $scan ? route('chat.send', $scan->id) : url('/chat/send') }}";
+                const url = "{{ $scan ? route('chat.send.scan', $scan->id) : route('chat.send') }}";
 
                 const res = await fetch(url, {
                     method: 'POST',
@@ -239,7 +247,7 @@
             if (text) inner += `<div>${escapeHtml(text)}</div>`;
 
             wrap.innerHTML = `
-                <div class="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-xs mt-1">${userInitial}</div>
+                ${userAvatarMarkup}
                 <div>
                     <div class="bg-[#0ea5e9] text-white p-4 rounded-2xl rounded-tr-none shadow-sm text-sm leading-relaxed">
                         ${inner}

@@ -8,12 +8,13 @@ from .schemas import PredictionResponse
 
 # Sesuaikan path ke folder models
 MODEL_PATH = Path(__file__).resolve().parent.parent / "models" / "model_cnn.keras"
+MODEL_VERSION_PATH = MODEL_PATH.with_name("model_version.txt")
 CLASS_NAMES = ['luka', 'obat', 'tidak_relevan'] # Urutan sesuai abjad folder saat training
 
 class Predictor:
     def __init__(self) -> None:
         self.model = None
-        self.model_version = "mobilenetv2-v1"
+        self.model_version = self._read_model_version()
 
         # Load model saat server dinyalakan
         if MODEL_PATH.exists():
@@ -24,6 +25,14 @@ class Predictor:
                 print(f"❌ Gagal memuat model: {e}")
         else:
             print(f"⚠️ File model tidak ditemukan di: {MODEL_PATH}")
+
+    @staticmethod
+    def _read_model_version() -> str:
+        if MODEL_VERSION_PATH.exists():
+            version = MODEL_VERSION_PATH.read_text(encoding="utf-8").strip()
+            if version:
+                return version
+        return "mobilenetv2-v1"
 
     @property
     def is_loaded(self) -> bool:

@@ -1,6 +1,10 @@
 # HealthCare AI Service
 
-Internal FastAPI service for the Hybrid AI flow. The current endpoint uses a random dummy classifier so Laravel integration can be tested before the trained MobileNetV2 model is installed.
+Internal FastAPI service for the Hybrid AI flow. The service loads the MobileNetV2 model from `models/model_cnn.keras`.
+
+## Local retraining
+
+Training awal dapat dilakukan di Google Colab. Untuk feedback loop dari data user yang sudah mendapat consent, jalankan `python train_retrain.py` dari root repository. Lihat `Docs/IMPLEMENTATION PLAN.md` untuk format CSV export admin, opsi `--dry-run`, dan alur backup model.
 
 ## Setup on Windows
 
@@ -25,4 +29,4 @@ Health check:
 Invoke-RestMethod http://127.0.0.1:8001/health
 ```
 
-The prediction response includes `model_version: dummy-random-v1`. This value must be replaced with the real MobileNetV2 model version in Phase 3; dummy results must not be presented as medical classification results.
+The prediction response includes the active value from `models/model_version.txt`, or `mobilenetv2-v1` when no version file exists.

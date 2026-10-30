@@ -3,10 +3,10 @@
     <div class="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
             <h2 class="text-3xl font-extrabold text-gray-900 tracking-tight">Monitoring Scan</h2>
-            <p class="text-gray-500 mt-1 text-sm">Pantau event aktivitas layanan pada data simulasi.</p>
+            <p class="text-gray-500 mt-1 text-sm">Pantau aktivitas scan yang tersimpan di database.</p>
         </div>
         <!-- TOMBOL EXPORT CSV -->
-        <a href="{{ route('admin.export.csv') }}" class="px-5 py-2.5 bg-white border border-gray-300 text-gray-700 text-sm font-bold rounded-xl shadow-sm hover:bg-gray-50 transition flex items-center gap-2">
+        <a href="{{ route('admin.export.csv', request()->query()) }}" class="px-5 py-2.5 bg-white border border-gray-300 text-gray-700 text-sm font-bold rounded-xl shadow-sm hover:bg-gray-50 transition flex items-center gap-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
             Ekspor Dataset CSV
         </a>
@@ -23,8 +23,8 @@
                 </div>
             </div>
             <div>
-                <h3 class="text-3xl font-bold text-gray-900">124</h3>
-                <p class="text-xs font-semibold text-gray-400 mt-1">Data simulasi</p>
+                <h3 class="text-3xl font-bold text-gray-900">{{ number_format($totalScans) }}</h3>
+                    <p class="text-xs font-semibold text-gray-400 mt-1">Total data</p>
             </div>
         </div>
 
@@ -37,8 +37,8 @@
                 </div>
             </div>
             <div>
-                <h3 class="text-3xl font-bold text-gray-900">118</h3>
-                <p class="text-xs font-semibold text-green-500 mt-1">95,2% keberhasilan</p>
+                <h3 class="text-3xl font-bold text-gray-900">{{ number_format($successfulScans) }}</h3>
+                    <p class="text-xs font-semibold text-green-500 mt-1">{{ $totalScans ? round($successfulScans / $totalScans * 100, 1) : 0 }}% keberhasilan</p>
             </div>
         </div>
 
@@ -51,8 +51,8 @@
                 </div>
             </div>
             <div>
-                <h3 class="text-3xl font-bold text-gray-900">06</h3>
-                <p class="text-xs font-semibold text-gray-400 mt-1">Contoh flag pemantauan</p>
+                <h3 class="text-3xl font-bold text-gray-900">{{ number_format($rejectedScans) }}</h3>
+                    <p class="text-xs font-semibold text-gray-400 mt-1">Scan ditolak</p>
             </div>
         </div>
 
@@ -65,8 +65,8 @@
                 </div>
             </div>
             <div>
-                <h3 class="text-3xl font-bold text-gray-900">18</h3>
-                <p class="text-xs font-semibold text-gray-400 mt-1">Simulasi sesi</p>
+                <h3 class="text-3xl font-bold text-gray-900">{{ number_format($activeChats) }}</h3>
+                    <p class="text-xs font-semibold text-gray-400 mt-1">Sesi 30 menit terakhir</p>
             </div>
         </div>
     </div>
@@ -75,14 +75,24 @@
     <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden mb-6">
 
         <!-- Filter Bar -->
-        <div class="p-6 border-b border-gray-100 flex flex-wrap gap-3">
-            <input type="text" placeholder="Cari nama, layanan, detail..." class="w-full md:w-80 bg-white border border-gray-200 text-sm rounded-xl py-2.5 px-4 focus:ring-[#0ea5e9] focus:border-[#0ea5e9]">
-            <input type="date" class="bg-white border border-gray-200 text-sm rounded-xl py-2.5 px-4 text-gray-500 focus:ring-[#0ea5e9] focus:border-[#0ea5e9]">
-            <input type="date" class="bg-white border border-gray-200 text-sm rounded-xl py-2.5 px-4 text-gray-500 focus:ring-[#0ea5e9] focus:border-[#0ea5e9]">
-            <button class="px-5 py-2.5 bg-white border border-gray-300 text-gray-700 text-sm font-bold rounded-xl shadow-sm hover:bg-gray-50 transition">
-                Reset
-            </button>
-        </div>
+        <form method="GET" data-ajax-filter class="p-6 border-b border-gray-100 flex flex-wrap items-end gap-3">
+            <input type="text" name="search" value="{{ $filters['search'] ?? '' }}" placeholder="Cari nama, layanan, detail..." class="w-full md:w-80 bg-white border border-gray-200 text-sm rounded-xl py-2.5 px-4 focus:ring-[#0ea5e9] focus:border-[#0ea5e9]">
+            <label class="flex flex-col gap-1 text-[11px] font-semibold text-gray-500">
+                Dari tanggal
+                <input type="date" name="from" value="{{ $filters['from'] ?? '' }}" class="bg-white border border-gray-200 text-sm rounded-xl py-2.5 px-4 text-gray-500">
+            </label>
+            <label class="flex flex-col gap-1 text-[11px] font-semibold text-gray-500">
+                Sampai tanggal
+                <input type="date" name="to" value="{{ $filters['to'] ?? '' }}" class="bg-white border border-gray-200 text-sm rounded-xl py-2.5 px-4 text-gray-500">
+            </label>
+            <select name="status" class="bg-white border border-gray-200 text-sm rounded-xl py-2.5 px-4 text-gray-500">
+                <option value="">Semua status</option>
+                <option value="accepted" @selected(($filters['status'] ?? '') === 'accepted')>Berhasil</option>
+                <option value="rejected" @selected(($filters['status'] ?? '') === 'rejected')>Ditolak</option>
+            </select>
+            <button type="submit" class="px-5 py-2.5 bg-[#0ea5e9] text-white text-sm font-bold rounded-xl shadow-sm hover:bg-[#0284c7] transition">Terapkan</button>
+            <a href="{{ route('admin.monitoring') }}" class="px-5 py-2.5 bg-white border border-gray-300 text-gray-700 text-sm font-bold rounded-xl shadow-sm hover:bg-gray-50 transition">Reset</a>
+        </form>
 
         <!-- Tabel Dinamis -->
         <div class="overflow-x-auto">
@@ -112,7 +122,7 @@
                         </td>
 
                         <!-- Layanan -->
-                        <td class="p-5 text-gray-700 capitalize">AI Scan {{ $scan->type }}</td>
+                        <td class="p-5 text-gray-700 capitalize">AI Scan {{ $scan->type ?? $scan->cnn_label ?? 'Tidak relevan' }}</td>
 
                         <!-- Detail / Label -->
                         <td class="p-5 text-gray-500">
@@ -127,7 +137,7 @@
 
                         <!-- Status -->
                         <td class="p-5">
-                            @if($scan->status == 'success')
+                            @if(in_array($scan->status, ['accepted', 'success'], true))
                                 <span class="bg-green-50 text-green-600 px-3 py-1 rounded-full text-xs font-bold">Berhasil</span>
                             @elseif($scan->status == 'rejected')
                                 <span class="bg-red-50 text-red-600 px-3 py-1 rounded-full text-xs font-bold">Ditolak</span>
@@ -151,5 +161,6 @@
                 </tbody>
             </table>
         </div>
+        <div class="p-5">{{ $scans->links() }}</div>
     </div>
 </x-app-layout>

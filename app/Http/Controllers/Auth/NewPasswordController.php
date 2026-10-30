@@ -24,6 +24,20 @@ class NewPasswordController extends Controller
         return view('auth.reset-password', ['request' => $request]);
     }
 
+    public function codeReset(Request $request): View|RedirectResponse
+    {
+        if (! session('password_reset_verified') || ! session('password_reset_token')) {
+            return redirect()->route('password.request');
+        }
+
+        $request->merge([
+            'email' => session('password_reset_email'),
+            'token' => session('password_reset_token'),
+        ]);
+
+        return view('auth.reset-password', ['request' => $request]);
+    }
+
     /**
      * Handle an incoming new password request.
      *
@@ -34,7 +48,7 @@ class NewPasswordController extends Controller
         $request->validate([
             'token' => ['required'],
             'email' => ['required', 'email'],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'password' => ['required', 'confirmed', Rules\Password::min(8)->mixedCase()->numbers()],
         ]);
 
         // Here we will attempt to reset the user's password. If it is successful we
@@ -55,9 +69,17 @@ class NewPasswordController extends Controller
         // If the password was successfully reset, we will redirect the user back to
         // the application's home authenticated view. If there is an error we can
         // redirect them back to where they came from with their error message.
-        return $status == Password::PASSWORD_RESET
-                    ? redirect()->route('login')->with('status', __($status))
-                    : back()->withInput($request->only('email'))
-                        ->withErrors(['email' => __($status)]);
+        if ($status == Password::PASSWORD_RESET) {
+            session()->forget([
+                'password_reset_email',
+                'password_reset_verified',
+                'password_reset_token',
+            ]);
+
+            return redirect()->route('login')->with('status', __($status));
+        }
+
+        return back()->withInput($request->only('email'))
+            ->withErrors(['email' => __($status)]);
     }
 }

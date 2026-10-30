@@ -14,10 +14,10 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="font-sans antialiased bg-[#f8fafc]">
-        <div class="flex h-screen overflow-hidden">
+        <div class="flex h-screen overflow-hidden app-shell">
 
             <!-- ===== SIDEBAR KIRI ===== -->
-            <aside class="w-72 bg-white border-r border-gray-100 flex-col hidden md:flex z-20">
+            <aside class="w-72 bg-white border-r border-gray-100 flex-col hidden md:flex z-20 app-sidebar">
 
                 <!-- Logo Area (Bisa Diklik ke Landing Page) -->
                 <a href="{{ url('/') }}" class="h-20 flex items-center px-8 border-b border-gray-50 hover:bg-gray-50 transition cursor-pointer">
@@ -171,9 +171,11 @@
                     <div class="p-4 border-t border-gray-100">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-full bg-[#e0f2fe] text-[#0284c7] flex items-center justify-center font-bold text-sm">
-                                    {{ strtoupper(substr(Auth::user()->name, 0, 2)) }}
-                                </div>
+                                @if(Auth::user()->profile_photo_path)
+                                    <img src="{{ asset('storage/'.Auth::user()->profile_photo_path) }}" alt="Foto profil {{ Auth::user()->name }}" class="w-10 h-10 rounded-full object-cover border border-white shadow-sm">
+                                @else
+                                    <div class="w-10 h-10 rounded-full bg-[#e0f2fe] text-[#0284c7] flex items-center justify-center font-bold text-sm">{{ strtoupper(substr(Auth::user()->name, 0, 2)) }}</div>
+                                @endif
                                 <div>
                                     <p class="text-sm font-bold text-gray-900">{{ Auth::user()->name }}</p>
                                     <p class="text-[11px] text-gray-500 capitalize">Akun {{ Auth::user()->role }}</p>
@@ -194,13 +196,13 @@
             <main class="flex-1 flex flex-col overflow-hidden relative bg-[#f0f9ff]">
 
                 <!-- Header (Topbar) -->
-                <header class="h-20 bg-white border-b border-gray-100 flex items-center justify-between px-6 lg:px-8 z-10">
+                <header class="h-20 bg-white border-b border-gray-100 flex items-center justify-between px-4 sm:px-6 lg:px-8 z-10 app-header">
 
                     <!-- Breadcrumb Dinamis -->
-                    <div class="flex items-center text-sm">
+                    <div class="flex items-center min-w-0 text-sm">
                         <span class="text-gray-400 font-medium">HealthCare AI</span>
                         <span class="mx-2 text-gray-300">/</span>
-                        <span class="font-bold text-gray-800">
+                        <span class="font-bold text-gray-800 truncate max-w-[48vw] sm:max-w-none">
                             @if(request()->routeIs('admin.dashboard'))
                                 Dashboard Admin
                             @elseif(request()->routeIs('admin.monitoring'))
@@ -226,13 +228,22 @@
                     </div>
 
                     <!-- Profil User (Dropdown saat Avatar di Klik) -->
-                    <div class="relative ml-auto" x-data="{ open: false }">
+                    <div class="relative ml-auto shrink-0" x-data="{ open: false }">
 
                         <!-- Tombol Avatar -->
-                        <button @click="open = !open" class="flex items-center justify-center focus:outline-none rounded-full p-1 hover:bg-gray-100 transition">
-                            <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-sm border border-blue-200 shadow-sm">
-                                {{ strtoupper(substr(Auth::user()->name, 0, 2)) }}
-                            </div>
+                        <button @click="open = !open" class="flex items-center gap-2 focus:outline-none rounded-xl p-1.5 hover:bg-gray-50 transition">
+                            <span class="hidden sm:block text-right">
+                                <span class="block text-xs font-bold text-gray-800">{{ Auth::user()->name }}</span>
+                                <span class="block text-[10px] {{ Auth::user()->role === 'admin' ? 'text-violet-600' : 'text-gray-500' }}">
+                                    {{ Auth::user()->role === 'admin' ? 'Admin' : 'Akun pengguna' }}
+                                </span>
+                            </span>
+                            @if(Auth::user()->profile_photo_path)
+                                <img src="{{ asset('storage/'.Auth::user()->profile_photo_path) }}" alt="Foto profil {{ Auth::user()->name }}" class="w-10 h-10 rounded-full object-cover border border-white shadow-sm">
+                            @else
+                                <div class="w-10 h-10 rounded-full {{ Auth::user()->role === 'admin' ? 'bg-violet-100 text-violet-700 border-violet-200' : 'bg-blue-100 text-blue-700 border-blue-200' }} flex items-center justify-center font-bold text-sm border shadow-sm">{{ strtoupper(substr(Auth::user()->name, 0, 2)) }}</div>
+                            @endif
+                            <svg class="w-4 h-4 text-gray-400 hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m6 9 6 6 6-6"></path></svg>
                         </button>
 
                         <!-- Menu Dropdown -->
@@ -269,10 +280,35 @@
                 </header>
 
                 <!-- Konten Dinamis -->
-                <div class="flex-1 overflow-y-auto p-6 md:p-10">
+                <div class="flex-1 overflow-y-auto p-4 sm:p-6 md:p-10 app-content">
                     {{ $slot }}
                 </div>
             </main>
         </div>
+        <script>
+            document.addEventListener('submit', async (event) => {
+                const form = event.target.closest('[data-ajax-filter]');
+                if (!form) return;
+                event.preventDefault();
+                const content = document.querySelector('.app-content');
+                const submit = form.querySelector('button[type="submit"]');
+                submit?.setAttribute('disabled', 'disabled');
+                content?.classList.add('opacity-60', 'pointer-events-none');
+                try {
+                    const response = await fetch(`${form.action}?${new URLSearchParams(new FormData(form))}`, {
+                        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'text/html' },
+                    });
+                    if (!response.ok) throw new Error('Filter request failed');
+                    const html = await response.text();
+                    const documentFragment = new DOMParser().parseFromString(html, 'text/html');
+                    const nextContent = documentFragment.querySelector('.app-content');
+                    if (!nextContent || !content) throw new Error('Invalid response');
+                    content.replaceWith(nextContent);
+                    window.history.pushState({}, '', `${form.action}?${new URLSearchParams(new FormData(form))}`);
+                } catch (error) {
+                    window.location.href = form.action;
+                }
+            });
+        </script>
     </body>
 </html>

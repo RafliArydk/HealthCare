@@ -1,3 +1,77 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@plugin "@tailwindcss/forms";
+@source "../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php";
+@source "../views/**/*.blade.php";
+@source "../js/**/*.js";
+
+@layer base {
+    html {
+        scroll-behavior: smooth;
+    }
+
+    body {
+        -webkit-tap-highlight-color: transparent;
+    }
+}
+
+@layer components {
+    .app-shell a,
+    .app-shell button,
+    .app-shell input,
+    .app-shell textarea,
+    .app-shell select {
+        transition-property: color, background-color, border-color, box-shadow, opacity, transform;
+        transition-duration: 180ms;
+        transition-timing-function: ease-out;
+    }
+
+    .app-sidebar a:hover {
+        transform: translateX(2px);
+    }
+
+    .app-content > * {
+        animation: app-content-enter 320ms ease-out both;
+    }
+}
+
+@keyframes app-content-enter {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 767px) {
+    .app-header {
+        min-height: 4.5rem;
+    }
+
+    .app-header button {
+        min-width: 2.75rem;
+        min-height: 2.75rem;
+    }
+
+    .app-content {
+        overscroll-behavior-y: contain;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}

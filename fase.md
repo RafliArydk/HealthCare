@@ -82,17 +82,17 @@ Progress: [░░░░░░░░░░░░░░░░░░░░] 0%
 ## 🚀 FASE 6: Finalisasi, Testing & Deployment
 *Fokus: Memastikan aplikasi aman, cepat, dan bisa diakses publik.*
 
-*   **[ ] LANGKAH 20: Polish UI & Error Handling**
+*   **[x] LANGKAH 20: Polish UI & Error Handling**
     *   Memperbaiki *loading state*, responsivitas HP, dan notifikasi.
-*   **[ ] LANGKAH 21: Pengujian Fungsional (Black-box)**
+*   **[x] LANGKAH 21: Pengujian Fungsional (Black-box)**
     *   Uji coba seluruh alur (Upload, Tolak, Terima, Chat, Riwayat).
-*   **[ ] LANGKAH 22: Dockerization**
+*   **[x] LANGKAH 22: Dockerization**
     *   Membuat `Dockerfile` untuk Laravel dan FastAPI.
     *   Membuat `docker-compose.yml` agar bisa jalan berdampingan.
 *   **[ ] LANGKAH 23: Deployment ke Cloud**
     *   Deploy Laravel ke Railway/VPS.
     *   Deploy FastAPI ke Railway/Render (atau server yang sama).
-*   **[ ] LANGKAH 24: Handover & Dokumentasi Akhir**
+*   **[x] LANGKAH 24: Handover & Dokumentasi Akhir**
     *   Update `README.md`, rapikan `Docs/`, dan pastikan repo GitHub bersih.
 
 ---

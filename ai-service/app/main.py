@@ -40,6 +40,14 @@ async def predict(file: UploadFile = File(...)) -> PredictionResponse:
         raise HTTPException(status_code=422, detail="File must be a JPG, PNG, or WEBP image")
 
     try:
+        contents = await file.read()
+        max_size = 10 * 1024 * 1024
+        if len(contents) > max_size:
+            raise HTTPException(status_code=422, detail="File must not exceed 10 MB")
+
+        await file.seek(0)
         return await predictor.predict(file)
     except ValueError as error:
         raise HTTPException(status_code=422, detail=str(error)) from error
+    except RuntimeError as error:
+        raise HTTPException(status_code=503, detail=str(error)) from error

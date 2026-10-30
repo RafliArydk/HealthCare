@@ -82,13 +82,13 @@
                         <div class="w-full h-64 bg-gray-200 rounded-xl mb-6 flex items-center justify-center relative overflow-hidden group">
                             <img src="{{ asset('storage/' . $latestScan->image_path) }}" class="w-full h-full object-contain">
                             <div class="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-lg text-xs font-bold text-gray-700 shadow-sm">
-                                Scan {{ ucfirst($latestScan->type) }} · {{ $latestScan->created_at->diffForHumans() }}
+                                Scan {{ ucfirst($latestScan->type ?? $latestScan->cnn_label ?? 'ditolak') }} · {{ $latestScan->created_at->diffForHumans() }}
                             </div>
                         </div>
 
                         <div class="mb-4">
                             <div class="flex justify-between items-end mb-2">
-                                <h4 class="text-xl font-bold text-gray-900">Hasil Scan {{ ucfirst($latestScan->type) }}</h4>
+                                <h4 class="text-xl font-bold text-gray-900">Hasil Scan {{ ucfirst($latestScan->type ?? $latestScan->cnn_label ?? 'ditolak') }}</h4>
                             </div>
                         </div>
 
@@ -185,7 +185,7 @@
                                     @endif
                                 </div>
                                 <div>
-                                    <p class="text-sm font-bold text-gray-800 group-hover:text-[#0ea5e9] transition">Scan {{ ucfirst($recent->type) }}</p>
+                                    <p class="text-sm font-bold text-gray-800 group-hover:text-[#0ea5e9] transition">Scan {{ ucfirst($recent->type ?? $recent->cnn_label ?? 'ditolak') }}</p>
                                     <p class="text-[11px] text-gray-500 mt-0.5">{{ $recent->created_at->diffForHumans() }}</p>
                                 </div>
                             </div>

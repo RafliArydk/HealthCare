@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class ProfileTest extends TestCase
@@ -59,6 +61,51 @@ class ProfileTest extends TestCase
             ->assertRedirect('/profile');
 
         $this->assertNotNull($user->refresh()->email_verified_at);
+    }
+
+    public function test_profile_photo_can_be_uploaded_and_replaced(): void
+    {
+        Storage::fake('public');
+        $user = User::factory()->create();
+
+        $firstPhoto = UploadedFile::fake()->image('first.jpg');
+        $this->actingAs($user)->patch('/profile', [
+            'name' => $user->name,
+            'email' => $user->email,
+            'profile_photo' => $firstPhoto,
+        ])->assertRedirect('/profile');
+
+        $user->refresh();
+        $oldPath = $user->profile_photo_path;
+        Storage::disk('public')->assertExists($oldPath);
+
+        $secondPhoto = UploadedFile::fake()->image('second.png');
+        $this->actingAs($user)->patch('/profile', [
+            'name' => $user->name,
+            'email' => $user->email,
+            'profile_photo' => $secondPhoto,
+        ])->assertRedirect('/profile');
+
+        $user->refresh();
+        Storage::disk('public')->assertMissing($oldPath);
+        Storage::disk('public')->assertExists($user->profile_photo_path);
+    }
+
+    public function test_profile_photo_must_be_a_supported_image(): void
+    {
+        Storage::fake('public');
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)
+            ->from('/profile')
+            ->patch('/profile', [
+                'name' => $user->name,
+                'email' => $user->email,
+                'profile_photo' => UploadedFile::fake()->create('document.pdf', 100, 'application/pdf'),
+            ]);
+
+        $response->assertSessionHasErrors('profile_photo')->assertRedirect('/profile');
+        $this->assertNull($user->fresh()->profile_photo_path);
     }
 
     public function test_user_can_delete_their_account(): void

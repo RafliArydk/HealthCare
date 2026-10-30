@@ -1,6 +1,7 @@
 <x-app-layout>
     <!-- CDN Markdown Parser -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.9/dist/purify.min.js"></script>
 
     <!-- CSS Tambahan untuk Markdown AI -->
     <style>
@@ -33,15 +34,15 @@
         <div class="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-gray-100 flex flex-col">
             <form id="scanForm" enctype="multipart/form-data">
 
-                <!-- Pilih Jenis Pemeriksaan -->
-                <div class="mb-6">
-                    <h3 class="font-bold text-gray-900 text-sm mb-1">Pilih jenis pemeriksaan</h3>
-                    <p class="text-[11px] text-gray-500 mb-4">Pastikan foto jelas dan cukup cahaya.</p>
-
-                    <div class="grid grid-cols-2 gap-3">
+                <!-- Jenis pemeriksaan ditentukan oleh CNN -->
+                <div class="mb-6 rounded-xl border border-blue-100 bg-blue-50/60 p-4">
+                    <h3 class="font-bold text-gray-900 text-sm mb-1">Topik ditentukan otomatis</h3>
+                    <p class="text-[11px] text-gray-600">CNN akan mengenali apakah gambar termasuk obat atau luka setelah kamu mengunggahnya.</p>
+                </div>
+                <div class="hidden">
                         <!-- Scan Obat -->
                         <label class="cursor-pointer">
-                            <input type="radio" name="type" value="obat" class="peer sr-only" checked>
+                            <input type="radio" name="detected_type_legacy" value="obat" class="peer sr-only" checked>
                             <div class="flex items-center gap-3 p-3 rounded-xl border border-gray-200 peer-checked:border-[#0ea5e9] peer-checked:bg-blue-50/50 transition text-left group bg-white">
                                 <div class="w-8 h-8 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center flex-shrink-0">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
@@ -49,13 +50,12 @@
                                 <div>
                                     <p class="text-xs font-bold text-gray-800">Scan obat</p>
                                     <p class="text-[10px] text-gray-500 mt-0.5">Informasi kemasan obat</p>
-                                </div>
                             </div>
                         </label>
 
                         <!-- Scan Luka -->
                         <label class="cursor-pointer">
-                            <input type="radio" name="type" value="luka" class="peer sr-only">
+                            <input type="radio" name="detected_type_legacy" value="luka" class="peer sr-only">
                             <div class="flex items-center gap-3 p-3 rounded-xl border border-gray-200 peer-checked:border-[#0ea5e9] peer-checked:bg-blue-50/50 transition text-left group bg-white">
                                 <div class="w-8 h-8 rounded-full bg-green-50 text-green-500 flex items-center justify-center flex-shrink-0">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
@@ -307,6 +307,21 @@
             btnResetMedia.classList.add('flex');
         }
 
+        function renderMarkdown(value) {
+            const html = marked.parse(String(value ?? ''));
+            return DOMPurify.sanitize(html);
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>"']/g, character => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            })[character]);
+        }
+
         // === 3. SUBMIT FORM (Tembak API Laravel) ===
         form.addEventListener('submit', async function(e) {
             e.preventDefault();
@@ -332,13 +347,13 @@
                     body: formData
                 });
 
-                const data = await response.json();
+                const data = await response.json().catch(() => ({}));
                 const resultDiv = document.querySelector('.flex-1.flex.flex-col.items-center.justify-center');
 
                 // LOGIKA GUARDRAIL & TAMPILAN UI
                 if (response.ok && data.success) {
                     // 1. TAMPILAN JIKA SUKSES
-                    const formattedAnalysis = marked.parse(data.analysis);
+                    const formattedAnalysis = renderMarkdown(data.analysis);
 
                     resultDiv.innerHTML = `
                         <div class="w-full h-full flex flex-col overflow-y-auto text-left">
@@ -356,7 +371,7 @@
 
                             <!-- Teks Analisis -->
                             <div class="prose prose-sm max-w-none text-gray-700 bg-gray-50 p-5 rounded-xl border border-gray-100 mb-5">
-                                ${formattedAnalysis}
+                                    ${formattedAnalysis}
                             </div>
 
                             <!-- Peringatan -->
@@ -388,7 +403,7 @@
                                 <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
                             </div>
                             <h4 class="text-xl font-bold text-red-700 mb-2">Gambar Ditolak</h4>
-                            <p class="text-sm text-red-600 font-medium mb-6">${data.message || 'Sistem tidak dapat memproses gambar ini.'}</p>
+                            <p class="text-sm text-red-600 font-medium mb-6">${escapeHtml(data.message || 'Sistem tidak dapat memproses gambar ini.')}</p>
 
                             <button type="button" onclick="resetApp()" class="px-6 py-2.5 bg-white border border-red-200 text-red-600 font-bold text-sm rounded-xl hover:bg-red-50 transition shadow-sm">
                                 Coba Scan Ulang
@@ -402,7 +417,14 @@
                 }
             } catch (error) {
                 console.error(error);
-                alert('Terjadi kesalahan jaringan atau server mati.');
+                const resultDiv = document.querySelector('.flex-1.flex.flex-col.items-center.justify-center');
+                resultDiv.innerHTML = `
+                    <div class="w-full h-full flex flex-col items-center justify-center text-center p-6 bg-orange-50 rounded-xl border border-orange-200">
+                        <h4 class="text-xl font-bold text-orange-700 mb-2">Layanan tidak tersedia</h4>
+                        <p class="text-sm text-orange-600 font-medium mb-6">Server AI sedang bermasalah. Silakan coba lagi beberapa saat.</p>
+                        <button type="button" onclick="resetApp()" class="px-6 py-2.5 bg-white border border-orange-200 text-orange-600 font-bold text-sm rounded-xl hover:bg-orange-50 transition shadow-sm">Coba lagi</button>
+                    </div>
+                `;
                 btnSubmit.disabled = false;
                 btnText.innerText = 'Analisis dengan AI';
             }

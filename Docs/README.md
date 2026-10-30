@@ -4,7 +4,7 @@ HealthCare adalah aplikasi web Laravel untuk edukasi awal tentang luka dan obat.
 
 ## Status proyek
 
-Laravel sudah menyediakan autentikasi, dashboard, upload scan, penyimpanan gambar, riwayat, dan chat lanjutan. Alur scan masih memanggil Groq secara langsung. `ai-service/`, MobileNetV2, confidence gate, dan audit log adalah pekerjaan fase berikutnya.
+Laravel menyediakan autentikasi, dashboard, upload scan, penyimpanan gambar, riwayat, chat lanjutan, confidence gate, audit log, dan integrasi FastAPI/Groq. Fase finalisasi menambahkan ownership check, rate limit, validasi respons AI, error handling aman, loading state UI, dan artefak Docker. Deployment publik masih menunggu pilihan provider, domain, dan secret produksi.
 
 ## Prasyarat
 
@@ -27,6 +27,10 @@ php artisan serve
 ```
 
 Buka `http://127.0.0.1:8000`. Pastikan database `healthcare_db` dibuat dan `.env` benar. Untuk frontend live reload gunakan terminal kedua: `npm run dev`.
+
+## Docker
+
+Salin `.env.example` ke `.env`, isi secret wajib, lalu jalankan `docker compose up --build -d`. Setelah container hidup, jalankan `docker compose exec app php artisan migrate --force`. Compose menyediakan Laravel, FastAPI, dan MySQL pada jaringan internal yang sama.
 
 ## Konfigurasi `.env`
 
@@ -60,7 +64,7 @@ uvicorn app.main:app --reload --port 8001
 ## Alur fitur target
 
 ```text
-Upload → validasi → CNN/FastAPI → confidence gate
+Upload → validasi → CNN/FastAPI → confidence gate → kategori otomatis (`luka`/`obat`)
        ├─ ditolak: simpan event dan minta foto ulang
        └─ diterima: Groq → disclaimer → simpan → tampilkan
 ```
@@ -71,6 +75,7 @@ Upload → validasi → CNN/FastAPI → confidence gate
 - [TRD](TRD.md) — arsitektur, API, schema, keamanan, dan NFR.
 - [Implementation Plan](IMPLEMENTATION%20PLAN.md) — fase pengerjaan manual.
 - [Testing Plan](testing.md) — test case dan gate rilis.
+- [Deployment checklist](deployment.md) — verifikasi sebelum dan sesudah deployment publik.
 
 ## Pindah PC ke laptop
 

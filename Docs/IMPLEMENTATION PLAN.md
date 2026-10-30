@@ -66,7 +66,7 @@ Ini adalah jawaban dari idemu: *"Gimana caranya gambar dari user bisa otomatis m
 
 Di dunia nyata, kita **tidak bisa** membiarkan data user langsung masuk ke dataset secara buta (otomatis 100%). Kenapa? Karena kalau ada user iseng upload gambar roti, lalu AI salah tebak jadi "Luka", dan roti itu masuk dataset, maka model AI kita jadi rusak (istilahnya *Data Poisoning*).
 
-Solusi profesionalnya adalah **Human-in-the-Loop (Admin sebagai kurator)**. Alurnya seperti ini (ini yang akan kita bangun di Fase 5 & 6):
+Solusi profesionalnya adalah **Human-in-the-Loop (Admin sebagai kurator)**. Alur ini sudah diimplementasikan melalui export dataset ber-consent dan retraining lokal:
 
 ```text
 User Upload Gambar
@@ -75,17 +75,17 @@ CNN + Groq Memproses (Tersimpan di Database)
        ↓
 Admin Buka Dashboard Admin (Melihat gambar yang masuk)
        ↓
-Admin Verifikasi: "Oh, ini benar luka. AI-nya benar." (Klik Approve)
+Admin Memastikan data dan consent layak digunakan
        ↓
-Admin Klik Tombol "Export Dataset" (Mengunduh format ZIP/CSV)
+Admin Klik Tombol "Export Dataset" (Mengunduh format CSV)
        ↓
-Admin Upload ke Google Drive & Buka Colab
+Admin Menyimpan manifest pada storage dataset lokal
        ↓
-Jalankan Kembali Script Training (Fine-Tuning)
+Jalankan `python train_retrain.py` di VS Code
        ↓
-Dapat Model V2 (Lebih Akurat)
+Model baru dicadangkan dan disimpan sebagai versi aktif
        ↓
-Ganti file model_cnn.keras di server
+Restart FastAPI agar versi terbaru dimuat
 ```
 
 **Kenapa ini keren untuk Proposal/Dosen?**
@@ -95,3 +95,15 @@ Karena ini menunjukkan bahwa sistem yang kamu buat bukan sistem "mati" yang cuma
 
 ### 💡 Kesimpulan
 Jadi, visi akhir aplikasi kita adalah: **"Aplikasi Web Medis dengan Otak Ganda (CNN + LLM) yang memiliki fitur Audit & Data Pipeline, sehingga Admin dapat melatih ulang AI-nya secara berkala dari data yang dikumpulkan dari user (Continuous Learning)."**
+
+## 6. Retraining lokal dari VS Code
+
+Training awal tetap dilakukan di Google Colab menggunakan dataset Kaggle. Untuk feedback loop, admin dapat mengekspor dataset ber-consent dari halaman admin, menyimpan CSV hasil ekspor di `storage/app/dataset/dataset.csv`, lalu menjalankan dari root proyek:
+
+```powershell
+python train_retrain.py --manifest storage/app/dataset/dataset.csv
+```
+
+Secara default script hanya mengambil gambar user dari `storage/app/public/scans`, memvalidasi tiga kelas, dan melakukan fine-tuning head MobileNetV2 di laptop. Dataset awal tidak otomatis ikut dilatih ulang. Jika ingin menggabungkannya secara eksplisit, tambahkan `--include-base-dataset`. Model lama dicadangkan otomatis sebelum `ai-service/models/model_cnn.keras` diganti. Gunakan `--dry-run` untuk memeriksa jumlah data tanpa melatih.
+
+Data user hanya boleh masuk melalui export admin yang sudah memfilter `consent_training = true` dan scan berhasil. Setelah model selesai dibuat, restart FastAPI agar model dan `model_version.txt` terbaru dimuat.

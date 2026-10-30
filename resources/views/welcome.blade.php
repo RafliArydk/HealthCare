@@ -25,8 +25,41 @@
             </div>
             <div class="landing-nav-actions">
                 @auth
-                    <a href="{{ route('dashboard') }}" class="button button-outline">Dashboard</a>
                     <a href="{{ route('scan.index') }}" class="button button-primary">Mulai Scan</a>
+                    <details class="landing-profile">
+                        <summary class="landing-profile-trigger {{ Auth::user()->role === 'admin' ? 'is-admin' : '' }}">
+                            @if(Auth::user()->profile_photo_path)
+                                <img src="{{ asset('storage/'.Auth::user()->profile_photo_path) }}" alt="Foto profil {{ Auth::user()->name }}" class="landing-profile-avatar object-cover">
+                            @else
+                                <span class="landing-profile-avatar">{{ strtoupper(substr(Auth::user()->name, 0, 2)) }}</span>
+                            @endif
+                            <span class="landing-profile-copy">
+                                <strong>{{ Auth::user()->name }}</strong>
+                                <small>{{ Auth::user()->role === 'admin' ? 'Admin' : 'Akun saya' }}</small>
+                            </span>
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+                        </summary>
+                        <div class="landing-profile-menu">
+                            <div class="landing-profile-heading">
+                                <strong>{{ Auth::user()->name }}</strong>
+                                <span>{{ Auth::user()->email }}</span>
+                            </div>
+                            @if(Auth::user()->role === 'admin')
+                                <a href="{{ route('admin.dashboard') }}">Dashboard Admin</a>
+                                <a href="{{ route('admin.monitoring') }}">Monitoring Scan</a>
+                                <a href="{{ route('admin.users') }}">Data Pengguna</a>
+                            @else
+                                <a href="{{ route('dashboard') }}">Dashboard</a>
+                                <a href="{{ route('history.index') }}">Riwayat Pemeriksaan</a>
+                                <a href="{{ route('chat.index') }}">CareBot Chat</a>
+                            @endif
+                            <a href="{{ route('settings.index') }}">Profil & Pengaturan</a>
+                            <form method="POST" action="{{ route('logout') }}">
+                                @csrf
+                                <button type="submit">Keluar</button>
+                            </form>
+                        </div>
+                    </details>
                 @else
                     <a href="{{ route('login') }}" class="button button-outline">Masuk</a>
                     <a href="{{ route('register') }}" class="button button-primary">Daftar</a>
@@ -166,6 +199,17 @@
         menuButton?.addEventListener('click', () => {
             const open = navLinks.classList.toggle('is-open');
             menuButton.setAttribute('aria-expanded', open ? 'true' : 'false');
+        });
+
+        document.querySelectorAll('.landing-nav-links a[href^="#"], .hero-actions a[href^="#"]').forEach((link) => {
+            link.addEventListener('click', (event) => {
+                const target = document.querySelector(link.getAttribute('href'));
+                if (!target) return;
+                event.preventDefault();
+                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                navLinks.classList.remove('is-open');
+                menuButton?.setAttribute('aria-expanded', 'false');
+            });
         });
 
         const imageInput = document.querySelector('#hero-image-input');

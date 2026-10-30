@@ -5,7 +5,7 @@
 **Versi:** 2.1
 **Referensi:** PRD 2.1 dan Proposal HealthCare, 27 Oktober 2026
 
-## 1. Arsitektur Target
+## 1. Arsitektur Implementasi
 
 ```text
 Browser → Laravel 13 Web/Orchestrator → MySQL
@@ -18,7 +18,7 @@ Browser → Laravel 13 Web/Orchestrator → MySQL
                                   Groq API
 ```
 
-Kondisi saat ini: `ScanController` masih mengirim gambar langsung ke Groq. FastAPI, CNN, dan confidence gate belum tersedia.
+Laravel mengirim gambar ke FastAPI untuk klasifikasi terlebih dahulu. Hanya label `luka` atau `obat` dengan confidence di atas 0.70 yang diteruskan ke Groq; label CNN tersebut menjadi kategori scan kanonik dan tidak dipilih manual oleh pengguna.
 
 ## 2. Stack Teknologi
 
@@ -63,19 +63,19 @@ Label wajib `luka`, `obat`, atau `tidak_relevan`. Laravel harus menolak response
 
 Alur Laravel: validasi → panggil FastAPI → reject bila label tidak relevan/skor `<= 0.70` → simpan gambar → susun prompt → panggil Groq → tambahkan disclaimer → simpan dan tampilkan.
 
-## 5. Schema Data Target
+## 5. Schema Data Implementasi
 
-Sudah ada: `users`, `scans`, `chats`. Tambahkan ke `scans` secara migration baru:
+Tabel `users`, `scans`, `chats`, dan `audit_logs` sudah digunakan. Kolom hybrid AI pada `scans` adalah:
 
 ```text
 cnn_label string nullable
 confidence_score decimal(5,4) nullable
 model_version string nullable
-status enum(pending, accepted, rejected, failed)
+status string (`pending`, `accepted`, `rejected`, atau `failed`)
 error_code string nullable
 ```
 
-Tabel target `audit_logs`: `id`, `user_id`, `scan_id`, `event_type`, `metadata` JSON, timestamps.
+Tabel `audit_logs` berisi `id`, `user_id`, `scan_id`, `event_type`, `metadata` JSON, dan timestamps.
 
 Semua query riwayat wajib membatasi `user_id` dari session. Jangan menghapus data lama secara destruktif.
 
@@ -107,10 +107,11 @@ Gunakan `config('services.groq.*')`, bukan `env()` langsung di controller. `.env
 ## 8. Keamanan dan Error
 
 - Lindungi route scan/chat dengan `auth` dan cek pemilik scan.
-- Tambahkan rate limit untuk scan dan chat.
+- Terapkan rate limit untuk scan dan chat.
 - Escape output AI sebelum dirender.
 - Jangan log API key, gambar mentah, atau data sensitif.
 - Gunakan token internal Laravel–FastAPI.
-- Audit `SCAN_REJECTED`, `SCAN_ACCEPTED`, `AI_FAILED`, dan `CHAT_SENT`.
-- File invalid → 422 tanpa panggilan AI; FastAPI timeout → failed; Groq 401/429/5xx → pesan aman tanpa secret.
+- Audit `SCAN_REJECTED` dan `SCAN_SUCCESS` dicatat untuk alur scan utama.
+- File invalid → 422 tanpa panggilan AI; FastAPI timeout atau Groq 401/429/5xx → pesan aman tanpa secret.
+- Status `failed` tersedia untuk kebutuhan lifecycle scan, tetapi kegagalan layanan eksternal saat ini dikembalikan sebagai error aman dan belum membuat record `failed`.
 - Kondisi darurat wajib dirujuk ke tenaga medis/UGD.
