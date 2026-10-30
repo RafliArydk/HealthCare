@@ -41,7 +41,5 @@ async def predict(file: UploadFile = File(...)) -> PredictionResponse:
 
     try:
         return await predictor.predict(file)
-    except RuntimeError as error:
-        raise HTTPException(status_code=503, detail=str(error)) from error
-    except NotImplementedError as error:
-        raise HTTPException(status_code=501, detail=str(error)) from error
+    except ValueError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error

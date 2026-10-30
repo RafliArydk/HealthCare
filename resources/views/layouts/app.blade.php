@@ -4,9 +4,13 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
-        <title>HealthCare</title>
+        <title>HealthCare AI</title>
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+
+        <!-- Alpine.js untuk Dropdown Menu -->
+        <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="font-sans antialiased bg-[#f8fafc]">
@@ -15,13 +19,13 @@
             <!-- ===== SIDEBAR KIRI ===== -->
             <aside class="w-72 bg-white border-r border-gray-100 flex-col hidden md:flex z-20">
 
-                <!-- Logo Area -->
-                <div class="h-20 flex items-center px-8 border-b border-gray-50">
+                <!-- Logo Area (Bisa Diklik ke Landing Page) -->
+                <a href="{{ url('/') }}" class="h-20 flex items-center px-8 border-b border-gray-50 hover:bg-gray-50 transition cursor-pointer">
                     <div class="bg-[#0ea5e9] text-white p-1.5 rounded-xl mr-3 shadow-sm">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"></path></svg>
                     </div>
                     <span class="text-xl font-bold text-gray-900 tracking-tight">HealthCareAI</span>
-                </div>
+                </a>
 
                 @if(Auth::user()->role === 'admin')
                     <!-- ================= SIDEBAR ADMIN ================= -->
@@ -188,8 +192,10 @@
 
             <!-- ===== KONTEN KANAN ===== -->
             <main class="flex-1 flex flex-col overflow-hidden relative bg-[#f0f9ff]">
-                <!-- Topbar -->
+
+                <!-- Header (Topbar) -->
                 <header class="h-20 bg-white border-b border-gray-100 flex items-center justify-between px-6 lg:px-8 z-10">
+
                     <!-- Breadcrumb Dinamis -->
                     <div class="flex items-center text-sm">
                         <span class="text-gray-400 font-medium">HealthCare AI</span>
@@ -219,25 +225,44 @@
                         </span>
                     </div>
 
-                    <div class="flex items-center gap-5 ml-auto">
-                        <!-- Search Bar -->
-                        <div class="relative hidden md:block w-64">
-                            <input type="text" placeholder="Cari fitur..." class="w-full bg-gray-50 border border-gray-200 text-sm rounded-xl py-2 pl-4 pr-10 focus:outline-none focus:border-[#0ea5e9] focus:ring-1 focus:ring-[#0ea5e9] transition">
-                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                            </div>
-                        </div>
+                    <!-- Profil User (Dropdown saat Avatar di Klik) -->
+                    <div class="relative ml-auto" x-data="{ open: false }">
 
-                        <!-- Notification Bell -->
-                        <button class="text-gray-400 hover:text-gray-600 relative">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
-                            <span class="absolute top-0 right-0 block w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
+                        <!-- Tombol Avatar -->
+                        <button @click="open = !open" class="flex items-center justify-center focus:outline-none rounded-full p-1 hover:bg-gray-100 transition">
+                            <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-sm border border-blue-200 shadow-sm">
+                                {{ strtoupper(substr(Auth::user()->name, 0, 2)) }}
+                            </div>
                         </button>
 
-                        <!-- Profil User -->
-                        <div class="flex items-center gap-3 border-l border-gray-200 pl-5">
-                            <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-sm">
-                                {{ strtoupper(substr(Auth::user()->name, 0, 2)) }}
+                        <!-- Menu Dropdown -->
+                        <div x-show="open" @click.away="open = false"
+                             class="absolute top-full right-0 mt-3 w-56 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50 overflow-hidden"
+                             style="display: none;">
+
+                            <div class="px-5 py-3 border-b border-gray-50 bg-gray-50/50 mb-1">
+                                <p class="text-sm font-bold text-gray-900 truncate">{{ Auth::user()->name }}</p>
+                                <p class="text-xs text-gray-500 truncate">{{ Auth::user()->email }}</p>
+                            </div>
+
+                            @if(Auth::user()->role === 'user')
+                                <a href="{{ route('dashboard') }}" class="block px-5 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-[#0ea5e9] transition">Dashboard</a>
+                                <a href="{{ route('history.index') }}" class="block px-5 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-[#0ea5e9] transition">Riwayat</a>
+                            @else
+                                <a href="{{ route('admin.dashboard') }}" class="block px-5 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-[#0ea5e9] transition">Dashboard Admin</a>
+                            @endif
+
+                            <a href="{{ route('settings.index') }}" class="block px-5 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-[#0ea5e9] transition">Pengaturan Akun</a>
+                            <a href="{{ route('help.index') }}" class="block px-5 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-[#0ea5e9] transition">Pusat Bantuan</a>
+
+                            <div class="border-t border-gray-100 mt-1 pt-1">
+                                <form method="POST" action="{{ route('logout') }}">
+                                    @csrf
+                                    <button type="submit" class="w-full text-left px-5 py-2.5 text-sm text-red-600 font-semibold hover:bg-red-50 transition flex items-center gap-2">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                                        Keluar
+                                    </button>
+                                </form>
                             </div>
                         </div>
                     </div>

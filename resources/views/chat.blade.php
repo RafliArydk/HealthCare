@@ -11,7 +11,7 @@
         .prose h3, .prose h4 { font-weight: bold; margin-top: 1rem; margin-bottom: 0.5rem; color: #0ea5e9; }
     </style>
 
-    <div class="h-[calc(100vh-8rem)] flex flex-col bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+    <div class="h-[calc(100vh-8rem)] flex flex-col bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden relative">
 
         <!-- Header Chat -->
         <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-white z-10">
@@ -37,7 +37,7 @@
         <div class="flex-1 overflow-y-auto p-6 space-y-6 bg-gray-50/50" id="chatArea">
 
             @if($scan)
-                <!-- Bubble AI 1: Hasil Analisis Awal -->
+                <!-- Bubble AI 1: Hasil Analisis Awal (Jika dari Scan) -->
                 <div class="flex gap-3 max-w-3xl">
                     <div class="w-8 h-8 bg-[#0ea5e9] rounded-full flex-shrink-0 flex items-center justify-center text-white mt-1">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
@@ -45,11 +45,9 @@
                     <div class="w-full">
                         <div class="bg-white border border-gray-100 p-5 rounded-2xl rounded-tl-none shadow-sm text-sm text-gray-700 leading-relaxed text-left">
                             <img src="{{ asset('storage/' . $scan->image_path) }}" class="w-full max-h-48 object-contain bg-gray-50 rounded-xl mb-4 border border-gray-100">
-
                             <div class="prose prose-sm max-w-none">
                                 {!! Str::markdown($scan->initial_analysis) !!}
                             </div>
-
                             <p class="text-[10px] text-orange-500 mt-4 border-t border-gray-100 pt-2 font-medium">
                                 <i class="bi bi-exclamation-triangle-fill mr-1"></i>
                                 Peringatan: Informasi ini dihasilkan oleh AI dan bukan diagnosis medis.
@@ -86,35 +84,50 @@
                     @endif
                 @endforeach
             @else
-                <!-- Tampilan jika tidak ada scan -->
-                <div class="flex flex-col items-center justify-center h-full text-center">
-                    <div class="w-16 h-16 bg-blue-50 text-[#0ea5e9] rounded-full flex items-center justify-center mb-4">
-                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+                <!-- Pesan Sambutan Jika Chat Langsung (Tanpa Scan) -->
+                <div class="flex gap-3 max-w-3xl">
+                    <div class="w-8 h-8 bg-[#0ea5e9] rounded-full flex-shrink-0 flex items-center justify-center text-white mt-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                     </div>
-                    <h3 class="text-lg font-bold text-gray-800">Belum ada riwayat scan</h3>
-                    <p class="text-sm text-gray-500 mb-6">Silakan lakukan scan terlebih dahulu untuk mulai bertanya.</p>
-                    <a href="{{ route('scan.index') }}" class="px-6 py-2.5 bg-[#0ea5e9] text-white rounded-xl font-bold">Mulai Scan</a>
+                    <div>
+                        <div class="bg-white border border-gray-100 p-4 rounded-2xl rounded-tl-none shadow-sm text-sm text-gray-700 leading-relaxed">
+                            Halo! Aku CareBot. Silakan ketik pertanyaan atau <b>paste gambar</b> (Ctrl+V) di sini untuk memulai percakapan.
+                        </div>
+                        <span class="text-[10px] text-gray-400 mt-1 block">Sistem · CareBot</span>
+                    </div>
                 </div>
             @endif
 
         </div>
 
-        <!-- Input Area -->
-        @if($scan)
-        <div class="p-4 bg-white border-t border-gray-100">
+        <!-- Input Area (SELALU MUNCUL) -->
+        <div class="p-4 bg-white border-t border-gray-100 relative z-20">
+
+            <!-- Preview Gambar (Untuk Upload / Paste) -->
+            <div id="previewWrap" class="absolute bottom-full left-4 mb-3 hidden items-end gap-2 bg-white p-2 rounded-xl shadow-lg border border-gray-200">
+                <img id="previewImg" class="h-16 w-16 object-cover rounded-lg border border-gray-100">
+                <button type="button" id="previewClose" class="bg-red-50 text-red-500 rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-100 transition shadow-sm">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
             <form id="chatForm" class="flex items-center gap-3 bg-gray-50 border border-gray-200 p-2 rounded-2xl focus-within:border-[#0ea5e9] focus-within:ring-1 focus-within:ring-[#0ea5e9] transition">
-                <input type="text" id="messageInput" class="flex-1 bg-transparent border-none focus:ring-0 text-sm py-2 px-2 text-gray-700" placeholder="Tanya lanjutan tentang hasil scan ini..." autocomplete="off">
+                <label for="imageInput" class="w-10 h-10 bg-white border border-gray-200 text-gray-500 rounded-xl flex items-center justify-center cursor-pointer hover:bg-gray-100 transition shadow-sm" title="Unggah Gambar">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                </label>
+                <input type="file" id="imageInput" accept="image/*" hidden>
+
+                <input type="text" id="messageInput" class="flex-1 bg-transparent border-none focus:ring-0 text-sm py-2 px-2 text-gray-700" placeholder="Tulis pesan atau paste gambar di sini..." autocomplete="off">
+
                 <button type="submit" id="btnSend" class="w-10 h-10 bg-[#0ea5e9] text-white rounded-xl flex items-center justify-center hover:bg-[#0284c7] transition disabled:opacity-50 disabled:cursor-not-allowed">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
                 </button>
             </form>
             <p class="text-center text-[10px] text-gray-400 mt-3">CareBot dapat membuat kesalahan. Selalu verifikasi informasi medis dengan dokter.</p>
         </div>
-        @endif
     </div>
 
     <script>
-        @if($scan)
         const form = document.getElementById('chatForm');
         const input = document.getElementById('messageInput');
         const chatArea = document.getElementById('chatArea');
@@ -122,26 +135,78 @@
         const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
         const userInitial = "{{ strtoupper(substr(Auth::user()->name, 0, 2)) }}";
 
+        // Elemen Upload/Paste
+        const imageInput = document.getElementById('imageInput');
+        const previewWrap = document.getElementById('previewWrap');
+        const previewImg = document.getElementById('previewImg');
+        const previewX = document.getElementById('previewClose');
+        let selectedFile = null;
+
+        // Fungsi Upload File via Tombol
+        imageInput.addEventListener('change', e => {
+            const file = e.target.files[0];
+            if (!file) return;
+            if (file.size > 10 * 1024 * 1024) return alert('Maksimal 10 MB');
+            selectedFile = file;
+            previewImg.src = URL.createObjectURL(file);
+            previewWrap.style.display = 'flex';
+        });
+
+        // Fungsi Paste Gambar (CTRL+V)
+        input.addEventListener('paste', function(e) {
+            const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+            for (let index in items) {
+                const item = items[index];
+                if (item.kind === 'file' && item.type.startsWith('image/')) {
+                    const file = item.getAsFile();
+                    if (file.size > 10 * 1024 * 1024) return alert('Maksimal 10 MB');
+
+                    selectedFile = file;
+                    previewImg.src = URL.createObjectURL(file);
+                    previewWrap.style.display = 'flex';
+                    e.preventDefault();
+                }
+            }
+        });
+
+        // Hapus Preview
+        previewX.addEventListener('click', () => {
+            selectedFile = null;
+            imageInput.value = '';
+            previewWrap.style.display = 'none';
+        });
+
+        // Submit Chat
         form.addEventListener('submit', async function(e) {
             e.preventDefault();
             const text = input.value.trim();
-            if (!text) return;
+            if (!text && !selectedFile) return;
 
-            appendUserMessage(text);
+            appendUserMessage(text, selectedFile);
             input.value = '';
-            btnSend.disabled = true;
+            const currentFile = selectedFile;
+            selectedFile = null;
+            imageInput.value = '';
+            previewWrap.style.display = 'none';
 
+            btnSend.disabled = true;
             const loadingEl = appendLoading();
 
+            const formData = new FormData();
+            formData.append('message', text);
+            if (currentFile) formData.append('image', currentFile);
+
             try {
-                const res = await fetch("{{ route('chat.send', $scan->id) }}", {
+                // Gunakan rute yang sesuai
+                const url = "{{ $scan ? route('chat.send', $scan->id) : url('/chat/send') }}";
+
+                const res = await fetch(url, {
                     method: 'POST',
                     headers: {
                         'X-CSRF-TOKEN': csrfToken,
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json'
+                        'Accept': 'application/json'
                     },
-                    body: JSON.stringify({ message: text })
+                    body: formData
                 });
 
                 const data = await res.json();
@@ -150,11 +215,11 @@
                 if (res.ok) {
                     appendAIMessage(data.reply);
                 } else {
-                    appendAIMessage('⚠️ Maaf, terjadi kesalahan pada server: ' + (data.message || 'Unknown Error'));
+                    appendAIMessage(data.reply || '⚠️ Terjadi kesalahan.');
                 }
             } catch (err) {
                 loadingEl.remove();
-                appendAIMessage('⚠️ Koneksi internet terputus atau error sistem.');
+                appendAIMessage('⚠️ Koneksi internet terputus.');
                 console.error(err);
             } finally {
                 btnSend.disabled = false;
@@ -162,14 +227,22 @@
             }
         });
 
-        function appendUserMessage(text) {
+        // Helper Render Pesan
+        function appendUserMessage(text, file) {
             const wrap = document.createElement('div');
             wrap.className = 'flex gap-3 max-w-3xl ml-auto flex-row-reverse';
+            let inner = '';
+            if (file) {
+                const url = URL.createObjectURL(file);
+                inner += `<img src="${url}" class="max-w-[200px] rounded-xl mb-2 border-2 border-white/20">`;
+            }
+            if (text) inner += `<div>${escapeHtml(text)}</div>`;
+
             wrap.innerHTML = `
                 <div class="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-xs mt-1">${userInitial}</div>
                 <div>
                     <div class="bg-[#0ea5e9] text-white p-4 rounded-2xl rounded-tr-none shadow-sm text-sm leading-relaxed">
-                        ${escapeHtml(text)}
+                        ${inner}
                     </div>
                     <span class="text-[10px] text-gray-400 mt-1 block text-right">Baru saja · Kamu</span>
                 </div>`;
@@ -180,16 +253,11 @@
         function appendAIMessage(html) {
             const wrap = document.createElement('div');
             wrap.className = 'flex gap-3 max-w-3xl';
-
-            // FALLBACK AMAN: Kalau marked/dompurify gagal load, tampilkan teks biasa
             let cleanHtml = html;
             try {
                 if (typeof marked !== 'undefined') cleanHtml = marked.parse(html);
                 if (typeof DOMPurify !== 'undefined') cleanHtml = DOMPurify.sanitize(cleanHtml);
-            } catch (e) {
-                console.error("Gagal parse Markdown", e);
-                cleanHtml = escapeHtml(html); // Fallback ke teks biasa
-            }
+            } catch (e) { cleanHtml = escapeHtml(html); }
 
             wrap.innerHTML = `
                 <div class="w-8 h-8 bg-[#0ea5e9] rounded-full flex-shrink-0 flex items-center justify-center text-white mt-1">
@@ -229,6 +297,5 @@
             d.textContent = s;
             return d.innerHTML;
         }
-        @endif
     </script>
-</x-app-layout>s
+</x-app-layout>

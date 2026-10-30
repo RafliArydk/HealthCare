@@ -1,135 +1,97 @@
-# Implementation Plan — HealthCare Hybrid AI
+Feedback Loop dengan Human-in-the-Loop dan Periodic Retraining
 
-**Metode:** kerjakan satu fase sampai Definition of Done terpenuhi. Stabilkan Laravel dahulu, bangun AI service, pasang guardrail, lalu uji.
+Ini adalah visi tingkat dewa untuk sebuah sistem AI: *AI-nya bisa belajar sendiri dari data yang dikasih user, jadi makin hari makin pintar.*
 
-## Fase 0 — Persiapan dan baseline
+Mari kita *pause* codingan sejenak, dan saya akan buatkan **Blueprint Rencana Awal, Tujuan Akhir, Fitur, dan Alur Sistem (termasuk ide cerdas kamu)** yang bisa langsung kamu pakai untuk presentasi atau nulis di proposal!
 
-**Estimasi:** 0,5–1 hari. Pastikan PHP 8.3+, Composer, Node, MySQL, Python 3.10+, Git terpasang.
+---
 
-```powershell
-composer install
-Copy-Item .env.example .env
-php artisan key:generate
-npm install
-npm run build
-php artisan storage:link
-php artisan migrate
-php artisan serve
+# 🗺️ BLUEPRINT SISTEM: HealthCare Hybrid AI (End-to-End)
+
+## 🎯 1. Tujuan Awal & Tujuan Akhir
+*   **Tujuan Awal (Masalah):** Masyarakat awam sering salah menangani luka ringan atau bingung membaca indikasi obat karena akses ke dokter terbatas dan informasi di internet tidak terstruktur.
+*   **Tujuan Akhir (Solusi):** Membangun platform asisten medis berbasis web yang **Cerdas, Aman, dan Terus Berkembang**.
+    *   **Cerdas:** Menggunakan *Hybrid AI* (Mata CNN untuk melihat + Otak LLM untuk menjelaskan).
+    *   **Aman:** Ada *Guardrail Gate* yang menolak gambar tidak relevan.
+    *   **Terus Berkembang:** Sistem mampu mengumpulkan data dari user untuk melatih ulang model CNN agar akurasinya semakin sempurna seiring waktu.
+
+---
+
+## 🛠️ 2. Tech Stack (Teknologi yang Digunakan)
+*   **Web Framework:** Laravel 13 (PHP 8.4) + Tailwind CSS (UI/UX).
+*   **Database:** MySQL (Menyimpan data user, riwayat scan, chat, dan audit log).
+*   **AI Microservice:** Python 3.10 + FastAPI (Jembatan antara web dan model AI).
+*   **Computer Vision (Mata AI):** **TensorFlow/Keras (MobileNetV2)**. Dilatih menggunakan Google Colab (GPU Gratis).
+*   **Generative LLM (Otak AI):** **Groq API (Qwen 3.8-27B)**. Memberikan penjelasan medis dengan sangat cepat (<5 detik).
+*   **Version Control:** Git & GitHub.
+
+---
+
+## ✨ 3. Fitur Utama (User & Admin)
+
+### 👤 Fitur User (Masyarakat)
+1.  **Scan Multimodal:** Upload foto dari galeri atau langsung jepret lewat kamera (WebRTC).
+2.  **Analisis Hybrid AI:** Mendapatkan hasil klasifikasi gambar (Luka/Obat) beserta penjelasan P3K dari LLM.
+3.  **Guardrail Safety:** Jika upload gambar kucing/pemandangan, sistem menolak dengan sopan.
+4.  **Tanya Jawab Lanjutan (Contextual Chat):** Bisa chat dengan AI untuk tanya detail tentang gambar yang barusan di-scan.
+5.  **Riwayat Pemeriksaan:** Menyimpan histori scan dan chat.
+6.  **Pengaturan Profil & Privasi:** Mengatur data diri dan opsi penyimpanan data.
+
+### 🛡️ Fitur Admin (Pengelola)
+1.  **Dashboard Monitoring:** Melihat statistik total user, total scan, dan total gambar yang ditolak.
+2.  **Audit Log:** Melacak aktivitas sistem (siapa yang scan, kapan, berhasil/ditolak).
+3.  **Data Pengguna:** Melihat daftar akun terdaftar.
+4.  **Export Dataset (Fitur Kunci):** Mengunduh data gambar beserta labelnya (format ZIP/CSV) untuk keperluan melatih ulang AI.
+
+---
+
+## 🔄 4. ALUR KERJA SISTEM (The Magic Flow)
+
+Ini adalah alur saat user melakukan scan:
+
+1.  **Input:** User upload gambar luka.
+2.  **Validasi Awal:** Laravel memvalidasi format dan ukuran file.
+3.  **CNN Prediction:** Laravel mengirim gambar ke **Python API**. Model **MobileNetV2** memprediksi: `label: luka`, `confidence: 0.95`.
+4.  **Guardrail Check:** Laravel mengecek. Karena label valid dan confidence > 0.70, alur dilanjutkan.
+5.  **LLM Explanation:** Laravel mengirim prompt ("Ini luka dengan akurasi 95%, berikan P3K") ke **Groq API**.
+6.  **Response:** Groq mengembalikan teks penjelasan.
+7.  **Save:** Laravel menyimpan gambar ke storage, dan menyimpan hasil (label, confidence, jawaban Groq) ke database MySQL.
+8.  **Output:** User melihat hasil di layar.
+
+---
+
+## 🧠 5. IDE GILA KAMU: "Continual Learning Pipeline" (Data Otomatis Masuk ke Dataset)
+
+Ini adalah jawaban dari idemu: *"Gimana caranya gambar dari user bisa otomatis masuk ke Colab buat retraining?"*
+
+Di dunia nyata, kita **tidak bisa** membiarkan data user langsung masuk ke dataset secara buta (otomatis 100%). Kenapa? Karena kalau ada user iseng upload gambar roti, lalu AI salah tebak jadi "Luka", dan roti itu masuk dataset, maka model AI kita jadi rusak (istilahnya *Data Poisoning*).
+
+Solusi profesionalnya adalah **Human-in-the-Loop (Admin sebagai kurator)**. Alurnya seperti ini (ini yang akan kita bangun di Fase 5 & 6):
+
+```text
+User Upload Gambar
+       ↓
+CNN + Groq Memproses (Tersimpan di Database)
+       ↓
+Admin Buka Dashboard Admin (Melihat gambar yang masuk)
+       ↓
+Admin Verifikasi: "Oh, ini benar luka. AI-nya benar." (Klik Approve)
+       ↓
+Admin Klik Tombol "Export Dataset" (Mengunduh format ZIP/CSV)
+       ↓
+Admin Upload ke Google Drive & Buka Colab
+       ↓
+Jalankan Kembali Script Training (Fine-Tuning)
+       ↓
+Dapat Model V2 (Lebih Akurat)
+       ↓
+Ganti file model_cnn.keras di server
 ```
 
-Smoke test: register → login → dashboard → scan → chat. Buat baseline commit sebelum perubahan.
+**Kenapa ini keren untuk Proposal/Dosen?**
+Karena ini menunjukkan bahwa sistem yang kamu buat bukan sistem "mati" yang cuma sekali jadi, tapi sistem **Adaptif** yang punya *Data Pipeline* untuk *Continuous Improvement*. Ini adalah standar sistem AI tingkat *Enterprise*.
 
-## Fase 1 — Rapikan baseline Laravel
+---
 
-**Estimasi:** 1–2 hari.
-
-- Pindahkan konfigurasi Groq dari controller ke `config/services.php`.
-- Tambahkan `AI_SERVICE_URL` dan `AI_SERVICE_TOKEN`.
-- Perbaiki ownership agar user tidak dapat membuka scan user lain.
-- Tambahkan status error scan dan tangani response Groq `failed()`.
-- Pastikan disclaimer selalu ditambahkan.
-- Tambahkan rate limit pada scan dan chat.
-
-**DoD:** auth, upload, direct-Groq, history, dan chat lulus smoke test serta API key tidak tampil di browser.
-
-## Fase 2 — Buat Python FastAPI service
-
-**Estimasi:** 2–3 hari.
-
-- Buat `ai-service/app/main.py`, `predictor.py`, `schemas.py`, `requirements.txt`.
-- Buat `GET /health` dan `POST /api/v1/predict`.
-- Awali dengan predictor dummy agar kontrak Laravel dapat diuji.
-- Tambahkan validasi file, token internal, timeout, dan log aman.
-
-```powershell
-cd ai-service
-python -m venv .venv
-.venv\Scripts\activate
-pip install -r requirements.txt
-uvicorn app.main:app --reload --port 8001
-```
-
-**DoD:** health sukses dan Laravel menerima `label` + `confidence_score` dummy.
-
-## Fase 3 — Latih dan pasang MobileNetV2
-
-**Estimasi:** 3–7 hari, tergantung dataset.
-
-- Siapkan dataset berizin dengan kelas `luka`, `obat`, `tidak_relevan`.
-- Pisahkan train/validation/test dan dokumentasikan sumbernya.
-- Resize 224×224, normalisasi, dan augmentation secukupnya.
-- Ukur accuracy, precision, recall, F1, loss, confusion matrix, dan latensi.
-- Simpan model/version di luar Git bila besar.
-- Tetapkan threshold 0.70 berdasarkan evaluasi.
-
-**DoD:** model dipanggil FastAPI, hasil terukur dilaporkan, dan gambar tidak relevan diuji khusus.
-
-## Fase 4 — Integrasi orchestrator dan guardrail
-
-**Estimasi:** 2–3 hari.
-
-- Tambahkan migration `cnn_label`, `confidence_score`, `model_version`, `status`.
-- Tambahkan migration/model `audit_logs`.
-- Buat `AiClassifierService` dan `GroqService`.
-- Ubah scan agar memanggil FastAPI terlebih dahulu.
-- Hentikan alur sebelum Groq bila label tidak relevan atau confidence `<= 0.70`.
-- Susun prompt dari hasil CNN + notes dan tambahkan disclaimer/rujukan darurat.
-
-**DoD:** test membuktikan rejected tidak pernah memanggil Groq; accepted menyimpan skor dan respons.
-
-## Fase 5 — UI, riwayat, dan chat
-
-**Estimasi:** 1–2 hari.
-
-- Tampilkan status validasi, klasifikasi, diterima/ditolak, dan generasi.
-- Tampilkan label/confidence tanpa menyatakan diagnosis.
-- Tampilkan safe rejection dan rujukan darurat dengan jelas.
-- Pastikan chat membawa konteks scan yang benar dan ownership terjaga.
-
-## Fase 6 — Pengujian dan evaluasi
-
-**Estimasi:** 2–3 hari.
-
-- Jalankan unit/feature Laravel dan test endpoint FastAPI.
-- Gunakan HTTP fake untuk Groq/FastAPI.
-- Uji luka, obat, acak, blur, confidence rendah, timeout, dan kondisi darurat.
-- Evaluasi model dengan confusion matrix/F1.
-- Minta evaluator manusia menilai relevansi dan keamanan.
-- Simpan bukti di `Docs/test-evidence/`.
-
-## Fase 7 — Deployment PoC
-
-**Estimasi:** 1–2 hari.
-
-- Siapkan Laravel, MySQL, Python service, HTTPS, dan secret environment.
-- Jalankan migration, `storage:link`, build asset, dan cache config.
-- Jangan expose FastAPI ke publik tanpa autentikasi.
-- Uji backup database/storage dan siapkan rollback ke direct-Groq.
-
-## Cara kerja manual harian
-
-Terminal 1:
-
-```powershell
-php artisan serve
-```
-
-Terminal 2:
-
-```powershell
-npm run dev
-```
-
-Mulai fase AI, Terminal 3:
-
-```powershell
-cd ai-service
-.venv\Scripts\activate
-uvicorn app.main:app --reload --port 8001
-```
-
-Setiap selesai task: cek `git diff`, jalankan test terkait, buka aplikasi, lalu commit perubahan kecil dengan pesan jelas.
-
-## Rollback aman
-
-Jangan menghapus database atau storage saat debugging. Buat backup SQL, gunakan migration baru, dan matikan integrasi FastAPI melalui config bila service bermasalah.
+### 💡 Kesimpulan
+Jadi, visi akhir aplikasi kita adalah: **"Aplikasi Web Medis dengan Otak Ganda (CNN + LLM) yang memiliki fitur Audit & Data Pipeline, sehingga Admin dapat melatih ulang AI-nya secara berkala dari data yang dikumpulkan dari user (Continuous Learning)."**

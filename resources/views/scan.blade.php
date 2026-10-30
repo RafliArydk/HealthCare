@@ -4,7 +4,6 @@
 
     <!-- CSS Tambahan untuk Markdown AI -->
     <style>
-        /* Tambahkan text-align: left; agar teks rata kiri */
         .prose { text-align: left; }
         .prose ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 1rem; }
         .prose ol { list-style-type: decimal; padding-left: 1.5rem; margin-bottom: 1rem; }
@@ -119,6 +118,17 @@
 
                 <input type="file" id="imageInput" name="image" accept="image/*" class="hidden">
 
+                <!-- Checkbox Consent -->
+                <div class="mb-6 flex items-start">
+                    <div class="flex items-center h-5">
+                        <input id="consent" name="consent_training" type="checkbox" value="1" required
+                            class="w-4 h-4 border border-gray-300 rounded bg-gray-50 focus:ring-3 focus:ring-blue-300 text-[#0ea5e9] cursor-pointer">
+                    </div>
+                    <label for="consent" class="ml-2 text-xs font-normal text-gray-600 cursor-pointer leading-tight">
+                        Saya setuju gambar ini digunakan secara anonim untuk meningkatkan akurasi AI HealthCare di masa depan.
+                    </label>
+                </div>
+
                 <!-- Tombol Submit -->
                 <button type="submit" id="btnSubmit" class="w-full bg-[#0ea5e9] text-white py-3.5 rounded-xl font-bold hover:bg-[#0284c7] transition shadow-md shadow-blue-200 flex items-center justify-center gap-2 mb-4 disabled:opacity-50 disabled:cursor-not-allowed">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
@@ -172,7 +182,7 @@
         let videoStream = null;
         let isCameraActive = false;
 
-        // === FUNGSI RESET TOTAL ===
+        // === FUNGSI RESET MEDIA (Hanya Input Kiri) ===
         function resetMedia() {
             currentFile = null;
             imageInput.value = '';
@@ -183,6 +193,27 @@
 
             stopCamera();
             placeholderState.classList.remove('hidden');
+        }
+
+        // === FUNGSI RESET TOTAL (Kiri & Kanan) ===
+        function resetApp() {
+            form.reset();
+            resetMedia();
+
+            // Kembalikan Empty State di Kanan
+            const resultDiv = document.querySelector('.flex-1.flex.flex-col.items-center.justify-center');
+            resultDiv.innerHTML = `
+                <div class="w-20 h-20 bg-white rounded-3xl shadow-sm border border-gray-100 flex items-center justify-center mb-6 text-[#0ea5e9]">
+                    <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
+                </div>
+                <h4 class="text-xl font-bold text-gray-900 mb-2">Siap untuk memulai?</h4>
+                <p class="text-sm text-gray-500 max-w-xs leading-relaxed">
+                    Unggah foto atau ambil gambar dari kamera, lalu klik tombol analisis.
+                </p>
+            `;
+
+            btnSubmit.disabled = false;
+            btnText.innerText = 'Analisis dengan AI';
         }
 
         // === FUNGSI PERSIAPAN UPLOAD FILE ===
@@ -276,7 +307,7 @@
             btnResetMedia.classList.add('flex');
         }
 
-        // === 3. SUBMIT FORM (Tembak API) ===
+        // === 3. SUBMIT FORM (Tembak API Laravel) ===
         form.addEventListener('submit', async function(e) {
             e.preventDefault();
 
@@ -302,15 +333,21 @@
                 });
 
                 const data = await response.json();
+                const resultDiv = document.querySelector('.flex-1.flex.flex-col.items-center.justify-center');
 
-                if (data.success) {
-                    // Render Markdown dari AI
+                // LOGIKA GUARDRAIL & TAMPILAN UI
+                if (response.ok && data.success) {
+                    // 1. TAMPILAN JIKA SUKSES
                     const formattedAnalysis = marked.parse(data.analysis);
 
-                    const resultDiv = document.querySelector('.flex-1.flex.flex-col.items-center.justify-center');
                     resultDiv.innerHTML = `
                         <div class="w-full h-full flex flex-col overflow-y-auto text-left">
                             <img src="${data.image_url}" class="w-full h-48 object-contain bg-gray-100 rounded-xl mb-4 shadow-sm border border-gray-200">
+
+                            <div class="flex gap-2 mb-3">
+                                <span class="bg-blue-100 text-blue-700 text-xs font-bold px-2.5 py-1 rounded-md border border-blue-200">CNN: ${data.cnn_label.toUpperCase()}</span>
+                                <span class="bg-green-100 text-green-700 text-xs font-bold px-2.5 py-1 rounded-md border border-green-200">Akurasi: ${(data.confidence * 100).toFixed(1)}%</span>
+                            </div>
 
                             <h4 class="text-lg font-bold text-[#0ea5e9] mb-3 flex items-center gap-2">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
@@ -329,21 +366,43 @@
                             </div>
 
                             <!-- TOMBOL TANYA LANJUT -->
-                            <a href="/chat/${data.scan_id}" class="w-full bg-[#0ea5e9] text-white py-3 rounded-xl font-bold hover:bg-[#0284c7] transition shadow-md shadow-blue-200 flex items-center justify-center gap-2 mb-4">
+                            <a href="/chat/${data.scan_id}" class="w-full bg-[#0ea5e9] text-white py-3 rounded-xl font-bold hover:bg-[#0284c7] transition shadow-md shadow-blue-200 flex items-center justify-center gap-2 mb-3">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
                                 Tanya CareBot Lanjutan
                             </a>
+
+                            <!-- TOMBOL SCAN ULANG -->
+                            <button type="button" onclick="resetApp()" class="w-full bg-white border border-gray-300 text-gray-700 py-3 rounded-xl font-bold hover:bg-gray-50 transition flex items-center justify-center gap-2 mb-4">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                Scan Ulang Gambar Lain
+                            </button>
+
                         </div>
                     `;
                     btnText.innerText = 'Selesai';
                 } else {
-                    alert('Error: ' + data.message);
-                    btnSubmit.disabled = false;
+                    // 2. TAMPILAN JIKA DITOLAK GUARDRAIL (Status 422 dari Laravel)
+                    resultDiv.innerHTML = `
+                        <div class="w-full h-full flex flex-col items-center justify-center text-center p-6 bg-red-50 rounded-xl border border-red-200">
+                            <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-4 shadow-sm">
+                                <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                            </div>
+                            <h4 class="text-xl font-bold text-red-700 mb-2">Gambar Ditolak</h4>
+                            <p class="text-sm text-red-600 font-medium mb-6">${data.message || 'Sistem tidak dapat memproses gambar ini.'}</p>
+
+                            <button type="button" onclick="resetApp()" class="px-6 py-2.5 bg-white border border-red-200 text-red-600 font-bold text-sm rounded-xl hover:bg-red-50 transition shadow-sm">
+                                Coba Scan Ulang
+                            </button>
+                        </div>
+                    `;
+
+
                     btnText.innerText = 'Analisis dengan AI';
+                    btnSubmit.disabled = false;
                 }
             } catch (error) {
                 console.error(error);
-                alert('Terjadi kesalahan jaringan.');
+                alert('Terjadi kesalahan jaringan atau server mati.');
                 btnSubmit.disabled = false;
                 btnText.innerText = 'Analisis dengan AI';
             }

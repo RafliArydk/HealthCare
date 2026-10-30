@@ -1,6 +1,6 @@
 # HealthCare AI Service
 
-Internal FastAPI service for the Hybrid AI flow. The endpoint contract is ready for Laravel integration; the trained MobileNetV2 model will be enabled in Phase 3 after the dataset and preprocessing are finalized.
+Internal FastAPI service for the Hybrid AI flow. The current endpoint uses a random dummy classifier so Laravel integration can be tested before the trained MobileNetV2 model is installed.
 
 ## Setup on Windows
 
@@ -25,4 +25,4 @@ Health check:
 Invoke-RestMethod http://127.0.0.1:8001/health
 ```
 
-The prediction endpoint returns `503` until `models/model_cnn.keras` and the real preprocessing/inference implementation are installed. This prevents the prototype from pretending that a dummy result is a valid medical classification.
+The prediction response includes `model_version: dummy-random-v1`. This value must be replaced with the real MobileNetV2 model version in Phase 3; dummy results must not be presented as medical classification results.
